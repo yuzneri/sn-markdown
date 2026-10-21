@@ -99,6 +99,20 @@ body {
   display: none;
 }
 
+/* 検索などのボタン（layout.ts）。書式のボタンが横にスクロールしても、モードの切り替えと一緒に常に見える */
+.tools {
+  display: flex;
+  flex-shrink: 0;
+  gap: 0.125rem;
+}
+
+/* iOS は、文字が 16px より小さい入力欄に触ると画面を拡大する（ビューポートで拡大を止めていないため） */
+@media (pointer: coarse) {
+  .cm-panel.cm-search .cm-textfield {
+    font-size: 16px;
+  }
+}
+
 .modes {
   display: flex;
   flex-shrink: 0;

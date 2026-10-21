@@ -61,6 +61,25 @@ const editorStyle = EditorView.theme({
   },
   '.cm-completionDetail': { color: 'var(--sn-stylekit-neutral-color)' },
   '.cm-tooltip-autocomplete ul li[aria-selected] .cm-completionDetail': { color: 'inherit' },
+  // 検索・置換のパネル（@codemirror/search）。既定の色はライトの固定値で、ボタンはグラデーション
+  '.cm-panels': { backgroundColor: 'var(--sn-stylekit-background-color)', color: 'var(--sn-stylekit-foreground-color)' },
+  '.cm-panels-top': { borderBottom: '1px solid var(--sn-stylekit-border-color)' },
+  '.cm-textfield': {
+    border: '1px solid var(--sn-stylekit-border-color)',
+    borderRadius: '4px',
+    backgroundColor: 'var(--sn-stylekit-editor-background-color)',
+    fontSize: '85%',
+  },
+  '.cm-button': {
+    border: '1px solid var(--sn-stylekit-border-color)',
+    borderRadius: '4px',
+    backgroundImage: 'none',
+    backgroundColor: 'var(--sn-stylekit-contrast-background-color)',
+    fontSize: '85%',
+  },
+  // 一致した箇所は info の色を薄く、いま選んでいる一致は濃くする（warning はダーク系のテーマで定義されていないことがある）
+  '.cm-searchMatch': { backgroundColor: 'color-mix(in srgb, var(--sn-stylekit-info-color) 20%, transparent)' },
+  '.cm-searchMatch-selected': { backgroundColor: 'color-mix(in srgb, var(--sn-stylekit-info-color) 45%, transparent)' },
 })
 
 export const editorTheme = [editorStyle, syntaxHighlighting(highlightStyle)]

@@ -152,6 +152,6 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
   }
 }
 
-function shortcutPrefix(): string {
+export function shortcutPrefix(): string {
   return /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+'
 }

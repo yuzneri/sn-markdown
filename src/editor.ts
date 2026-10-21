@@ -1,6 +1,7 @@
 import { Compartment, EditorState, Transaction, type ChangeSpec, type Extension, type TransactionSpec } from '@codemirror/state'
 import { EditorView, keymap, type Command } from '@codemirror/view'
 import { autocompletion } from '@codemirror/autocomplete'
+import { closeSearchPanel, openSearchPanel, search, searchKeymap, searchPanelOpen } from '@codemirror/search'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
@@ -30,6 +31,8 @@ export interface MarkdownEditor {
   insertImages(files: File[]): void
   /** 書式のコマンドを実行し、エディタにフォーカスを戻す（ボタンから続けて入力できるように） */
   run(command: Command): void
+  /** 検索・置換のパネルを開く（開いていれば閉じる） */
+  toggleSearch(): void
 }
 
 export interface EditorHandlers {
@@ -53,7 +56,9 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         lock.of(lockExtension(initial.locked)),
         history(),
         // Tab でリストを字下げできるようにする。キーボードだけで抜けるには Esc の後に Tab（CodeMirror の既定の動作）
-        keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
+        // 長いノートでは、画面に見えている部分しか描かないので、ブラウザの検索では画面の外の文字が見つからない
+        search({ top: true }),
         formatKeymap,
         // 表の中の Tab / Enter。markdown() のキーマップ（リストの続きの Enter）と同じ優先度なので、その前に置く
         tableKeymap,
@@ -111,6 +116,11 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
     run(command) {
       command(view)
       view.focus()
+    },
+    toggleSearch() {
+      // 開くと検索の欄にフォーカスが移るので、run と違ってエディタにはフォーカスを戻さない
+      if (searchPanelOpen(view.state)) closeSearchPanel(view)
+      else openSearchPanel(view)
     },
     insertImages(files) {
       images.insert(view, files).catch((error: unknown) => handlers.onError(error instanceof Error ? error.message : String(error)))

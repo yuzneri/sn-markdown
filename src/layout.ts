@@ -1,6 +1,7 @@
 import type { Command } from '@codemirror/view'
+import { createElement, Search, type IconNode } from 'lucide'
 import { element } from './dom'
-import { createFormatBar } from './format-bar'
+import { createFormatBar, shortcutPrefix } from './format-bar'
 import { MODES, type Mode } from './preferences'
 
 const LABELS: Record<Mode, string> = { edit: 'Edit', split: 'Split', preview: 'Preview' }
@@ -32,6 +33,8 @@ export interface LayoutHandlers {
   onCommand(command: Command): void
   /** Image ボタンで画像が選ばれた */
   onImageFiles(files: File[]): void
+  /** 検索のボタンが押された */
+  onSearch(): void
 }
 
 export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutHandlers): Layout {
@@ -43,6 +46,11 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
   const message = element('span', 'toolbar-message')
   message.setAttribute('role', 'status')
   let messageTimer: ReturnType<typeof setTimeout> | undefined
+
+  // 検索などのボタン。書式ではないので書式のボタンとは分け、モードの切り替えの左に置く（横にスクロールしても隠れない）
+  const tools = element('div', 'tools')
+  const searchButton = toolButton(Search, `Find and replace (${shortcutPrefix()}F)`, handlers.onSearch)
+  tools.append(searchButton)
 
   const modes = element('div', 'modes')
   modes.setAttribute('role', 'group')
@@ -59,7 +67,7 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     return button
   })
   modes.append(...buttons)
-  toolbar.append(formatBar.element, modes, message)
+  toolbar.append(formatBar.element, tools, modes, message)
 
   const panes = element('div', 'panes')
   const editorPane = element('div', 'pane editor-pane')
@@ -71,8 +79,12 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
 
   let current = initial
   let locked = false
-  // プレビューのモードではエディタが見えず、ロック中は書き換えられないので、書式のボタンは押せないようにする
-  const updateFormatBar = () => formatBar.setEnabled(current !== 'preview' && !locked)
+  // プレビューのモードではエディタが見えず、ロック中は書き換えられないので、書式のボタンは押せないようにする。
+  // 検索はロック中でもできる（置換の欄は、CodeMirror が読み取り専用のときに出さない）
+  const updateFormatBar = () => {
+    formatBar.setEnabled(current !== 'preview' && !locked)
+    searchButton.disabled = current === 'preview'
+  }
 
   const layout: Layout = {
     get mode() {
@@ -105,4 +117,16 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
   }
   layout.setMode(initial)
   return layout
+}
+
+function toolButton(icon: IconNode, label: string, onClick: () => void): HTMLButtonElement {
+  const button = element('button', 'format-button')
+  button.type = 'button'
+  button.title = label
+  button.setAttribute('aria-label', label)
+  button.append(createElement(icon, { width: 16, height: 16, 'aria-hidden': 'true' }))
+  // エディタのフォーカスと選択範囲を保つ（検索の欄の初期値は、選択している語になる）
+  button.addEventListener('mousedown', (event) => event.preventDefault())
+  button.addEventListener('click', onClick)
+  return button
 }

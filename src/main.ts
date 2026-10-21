@@ -73,6 +73,9 @@ const bridge = connectNote((update) => {
     onImageFiles(files) {
       editor?.insertImages(files)
     },
+    onSearch() {
+      editor?.toggleSearch()
+    },
   })
   layout.setLocked(update.locked)
   enableDiagramViewer(layout.preview)
