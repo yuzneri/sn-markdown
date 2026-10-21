@@ -1,6 +1,5 @@
 import type { Mermaid } from 'mermaid'
-
-export type DiagramTheme = 'light' | 'dark'
+import type { Appearance } from './appearance'
 
 type DiagramResult = { svg: string } | { error: string }
 
@@ -14,7 +13,7 @@ const cache = new Map<string, DiagramResult>()
 const pending = new Set<string>()
 
 let mermaid: Promise<Mermaid> | undefined
-let initializedTheme: DiagramTheme | undefined
+let initializedTheme: Appearance | undefined
 let nextId = 0
 // mermaid は描画中に一時的な要素を文書に足すので、描画は 1 つずつ行う
 let queue: Promise<void> = Promise.resolve()
@@ -23,7 +22,7 @@ let queue: Promise<void> = Promise.resolve()
  * プレビュー中の Mermaid の目印（.mermaid-block）を図にする。描いたことのある図はその場で差し込み、
  * まだのものは描き終えてから onRendered を呼ぶ（呼ばれた側がプレビューを描き直すと、今度はその場で差し込まれる）
  */
-export function renderDiagrams(container: HTMLElement, theme: DiagramTheme, onRendered: () => void): void {
+export function renderDiagrams(container: HTMLElement, theme: Appearance, onRendered: () => void): void {
   for (const block of container.querySelectorAll<HTMLElement>('.mermaid-block')) {
     const source = block.textContent ?? ''
     const key = `${theme}\n${source}`
@@ -50,7 +49,7 @@ export function renderDiagrams(container: HTMLElement, theme: DiagramTheme, onRe
   }
 }
 
-async function draw(source: string, theme: DiagramTheme): Promise<DiagramResult> {
+async function draw(source: string, theme: Appearance): Promise<DiagramResult> {
   let api: Mermaid
   try {
     // mermaid は大きい（ELK を含む）ので、図のあるノートを開いたときにだけ読み込む
