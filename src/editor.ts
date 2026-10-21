@@ -10,6 +10,7 @@ import { completeCodeLanguage } from './code-language'
 import { formatKeymap } from './commands'
 import { collapseDataUrls } from './data-url'
 import { imageInsertion } from './image-insert'
+import { tableKeymap } from './table-commands'
 import { editorTheme } from './theme'
 
 export interface MarkdownEditor {
@@ -49,6 +50,8 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         // Tab でリストを字下げできるようにする。キーボードだけで抜けるには Esc の後に Tab（CodeMirror の既定の動作）
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         formatKeymap,
+        // 表の中の Tab / Enter。markdown() のキーマップ（リストの続きの Enter）と同じ優先度なので、その前に置く
+        tableKeymap,
         // 補完は言語名だけにする（override）ので、HTML タグの補完ソースは登録しない
         markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false }),
         // 最初から候補を選んでおくと、言語名を打ち終えて Enter を押したときに、改行の代わりに候補が入る。

@@ -6,10 +6,7 @@ import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { completeCodeLanguage } from './code-language'
 import { insertCodeBlock } from './commands'
-
-// jsdom の Range には、一覧を置く位置を測る getClientRects / getBoundingClientRect がない（レイアウトがない）
-Range.prototype.getClientRects = () => ({ length: 0, item: () => null, [Symbol.iterator]: [][Symbol.iterator] }) as unknown as DOMRectList
-Range.prototype.getBoundingClientRect = () => new DOMRect()
+import './jsdom-range'
 
 const views: EditorView[] = []
 afterEach(() => views.splice(0).forEach((view) => view.destroy()))
