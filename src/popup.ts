@@ -9,7 +9,8 @@ export interface Popup {
 
 /**
  * ボタンの下に重ねて開く一覧（見出しの一覧など）。開くたびに fill で中身を作り直し、最初の項目（role=menuitem）にフォーカスを移す。
- * 一覧の外を押したとき、Esc、もう一度ボタンを押したときに閉じる。↑↓ で項目のフォーカスを動かし、端では反対の端に回る。
+ * 一覧の外を押したとき、Esc、もう一度ボタンを押したときに閉じる。↑↓（と、記号の一覧のように横にも並ぶもののために ←→）で
+ * 項目のフォーカスを動かし、端では反対の端に回る。
  * Popover API は iOS 17 より前で動かないので、ふつうの要素の表示を切り替える
  */
 export function createPopup(button: HTMLButtonElement, className: string, label: string, fill: (menu: HTMLElement) => void): Popup {
@@ -57,11 +58,11 @@ export function createPopup(button: HTMLButtonElement, className: string, label:
       close(true)
       return
     }
-    if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
+    const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[event.key]
+    if (!step) return
     event.preventDefault()
     const entries = items()
-    const index = entries.indexOf(document.activeElement as HTMLElement)
-    const next = event.key === 'ArrowDown' ? index + 1 : index - 1
+    const next = entries.indexOf(document.activeElement as HTMLElement) + step
     entries[(next + entries.length) % entries.length]?.focus()
   })
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
-import { cycleHeading, insertBlock, insertLink, insertMath, insertTex, toggleInline, toggleLinePrefix, wrapCodeBlock } from './commands'
+import { cycleHeading, insertBlock, insertLink, insertMath, insertSymbol, insertTex, toggleInline, toggleLinePrefix, wrapCodeBlock } from './commands'
 
 /** `|` をカーソル、`«` `»` を選択範囲として書いた文書にコマンドを実行し、同じ書き方で結果を返す */
 function run(command: StateCommand, doc: string, options: { readOnly?: boolean } = {}): string {
@@ -175,5 +175,23 @@ describe('insertMath', () => {
 
   it('複数の行の選択は $$ のブロックで囲む', () => {
     expect(run(insertMath, 'text\n«a = 1\nb = 2»\nmore')).toBe('text\n\n$$\na = 1\nb = 2|\n$$\n\nmore')
+  })
+})
+
+describe('insertSymbol', () => {
+  const alpha = insertSymbol('\\alpha')
+
+  it('記号の命令を入れ、後ろにカーソルを置く。閉じの $ の前には空白を足さない', () => {
+    expect(run(alpha, '$x + |$')).toBe('$x + \\alpha|$')
+  })
+
+  it('すぐ後ろが英字なら、空白を 1 つ足す（\\alphay という別の命令にならないように）', () => {
+    expect(run(alpha, '$|y$')).toBe('$\\alpha |y$')
+    expect(run(insertSymbol('\\le'), '$a |b$')).toBe('$a \\le |b$')
+  })
+
+  it('記号で終わる命令（英字で終わらない）には空白を足さない。選択範囲は置き換える', () => {
+    expect(run(insertSymbol('\\{'), '$|x$')).toBe('$\\{|x$')
+    expect(run(alpha, '$«a»$')).toBe('$\\alpha|$')
   })
 })

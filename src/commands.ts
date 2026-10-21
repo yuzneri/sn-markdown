@@ -197,6 +197,27 @@ export function insertTex(template: string): StateCommand {
 }
 
 /**
+ * 記号の命令（\\alpha など）を入れる（記号の一覧）。すぐ後ろが英字なら空白を 1 つ足す（\\alphax という別の命令にならないように）。
+ * それ以外では足さない。行の中の数式で閉じの $ の前に空白があると、プレビューで数式にならないため
+ */
+export function insertSymbol(tex: string): StateCommand {
+  return ({ state, dispatch }) => {
+    if (state.readOnly) return false
+    dispatch(
+      state.update(
+        state.changeByRange((range) => {
+          const space = /[A-Za-z]$/.test(tex) && /^[A-Za-z]/.test(state.sliceDoc(range.to, range.to + 1)) ? ' ' : ''
+          const insert = tex + space
+          return { changes: { from: range.from, to: range.to, insert }, range: EditorSelection.cursor(range.from + insert.length) }
+        }),
+        { scrollIntoView: true, userEvent: 'input' },
+      ),
+    )
+    return true
+  }
+}
+
+/**
  * 数式を入れる（数式の外の「数式」ボタン）。空の行ではブロックの $$、行の途中では $…$ を入れる。
  * 1 行の選択は $ で、複数の行の選択は $$ のブロックで囲む。カーソルは数式の中に置く（すぐに数式の組のボタンを使えるように）
  */

@@ -78,7 +78,7 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     return button
   })
   modes.append(...buttons)
-  toolbar.append(formatBar.element, tools, modes, message, outline.element)
+  toolbar.append(formatBar.element, tools, modes, message, outline.element, ...formatBar.overlays)
 
   const panes = element('div', 'panes')
   const editorPane = element('div', 'pane editor-pane')

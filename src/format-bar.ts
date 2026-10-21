@@ -14,6 +14,7 @@ import {
   ListOrdered,
   ListTodo,
   Minus,
+  Omega,
   Radical,
   Sigma,
   SquareCode,
@@ -32,6 +33,7 @@ import {
 } from 'lucide'
 import { cycleHeading, insertBlock, insertCodeBlock, insertLink, insertMath, insertTex, toggleInline, toggleLinePrefix } from './commands'
 import { element } from './dom'
+import { createSymbolMenu } from './symbols'
 import type { CursorContext } from './editor'
 import { addColumnRight, addRowBelow, alignColumn, deleteColumn, deleteRow, formatCurrentTable } from './table-commands'
 
@@ -48,8 +50,9 @@ interface Action {
   label: string
   /** ショートカットのキー（Mod と組み合わせる） */
   key?: string
-  /** コマンドがなければ画像の挿入（ファイルの選択） */
+  /** コマンドがなければ画像の挿入（ファイルの選択）。symbols なら記号の一覧を開く */
   command?: Command
+  menu?: 'symbols'
 }
 
 // Lucide には行・列を足す・消すアイコンがないので、Lucide と同じ線（24 の枠、太さ 2）で描く。
@@ -112,6 +115,8 @@ const MATH_GROUP: Action[] = [
   { icon: INTEGRAL, label: 'Integral', command: insertTex('\\int_{¦}^{‸}') },
   { icon: Brackets, label: 'Matrix', command: insertTex('\\begin{pmatrix} ¦ & ‸ \\\\  &  \\end{pmatrix}') },
   { icon: Braces, label: 'Cases', command: insertTex('\\begin{cases} ¦ & ‸ \\\\  &  \\end{cases}') },
+  // ギリシャ文字や記号を、一覧から選んで入れる（symbols.ts）
+  { icon: Omega, label: 'Symbols', menu: 'symbols' },
 ]
 
 export interface FormatBarHandlers {
@@ -121,6 +126,8 @@ export interface FormatBarHandlers {
 
 export interface FormatBar {
   readonly element: HTMLElement
+  /** ボタンの下に重ねて開く一覧（記号の一覧）。書式のボタンの部分は横にスクロールして一覧が切れるので、ツールバーに入れる */
+  readonly overlays: HTMLElement[]
   /** プレビューのモードとロック中は、押しても意味がないので無効にする */
   setEnabled(enabled: boolean): void
   /** カーソルが表の中にあるときは表の行・列の操作に、数式の中にあるときは数式の入力補助に、最後の組を替える */
@@ -144,6 +151,7 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
     imageInput.value = ''
   })
 
+  const overlays: HTMLElement[] = []
   const createButton = (action: Action) => {
     const button = element('button', 'format-button')
     button.type = 'button'
@@ -153,7 +161,13 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
     button.append(createElement(action.icon, { width: 16, height: 16, 'aria-hidden': 'true' }))
     // ボタンにフォーカスを移さず、エディタの選択範囲を保ったまま書式を付ける
     button.addEventListener('mousedown', (event) => event.preventDefault())
-    button.addEventListener('click', () => (action.command ? handlers.onCommand(action.command) : imageInput.click()))
+    if (action.menu === 'symbols') {
+      const menu = createSymbolMenu(button, handlers.onCommand)
+      overlays.push(menu.element)
+      button.addEventListener('click', () => menu.toggle())
+    } else {
+      button.addEventListener('click', () => (action.command ? handlers.onCommand(action.command) : imageInput.click()))
+    }
     bar.append(button)
     return button
   }
@@ -171,6 +185,7 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
 
   return {
     element: bar,
+    overlays,
     setEnabled(enabled) {
       for (const button of buttons) button.disabled = !enabled
     },
