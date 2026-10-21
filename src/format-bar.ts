@@ -15,14 +15,12 @@ import {
   Strikethrough,
   Table,
   TextQuote,
-  Workflow,
   type IconNode,
 } from 'lucide'
 import { cycleHeading, insertBlock, insertLink, toggleInline, toggleLinePrefix, wrapCodeBlock } from './commands'
 import { element } from './dom'
 
 const TABLE = '| Column | Column |\n| --- | --- |\n|  |  |'
-const MERMAID = '```mermaid\ngraph TD\n  A --> B\n```'
 
 /** block の中の text を選ぶ範囲 */
 function selecting(block: string, text: string): { from: number; to: number } {
@@ -60,7 +58,6 @@ const GROUPS: Action[][] = [
     // 入れた後に最初の列名を選んで、そのまま書き換えられるようにする
     { icon: Table, label: 'Table', command: insertBlock(TABLE, selecting(TABLE, 'Column')) },
     { icon: Minus, label: 'Horizontal rule', command: insertBlock('---') },
-    { icon: Workflow, label: 'Mermaid diagram', command: insertBlock(MERMAID, selecting(MERMAID, 'A --> B')) },
     { icon: Image, label: 'Image' },
   ],
 ]
