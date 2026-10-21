@@ -49,6 +49,18 @@ const editorStyle = EditorView.theme({
     color: 'var(--sn-stylekit-neutral-color)',
     fontSize: '0.85em',
   },
+  // 言語名の補完の一覧（code-language.ts）。既定の色はライトの固定値
+  '.cm-tooltip': {
+    border: '1px solid var(--sn-stylekit-border-color)',
+    backgroundColor: 'var(--sn-stylekit-background-color)',
+    color: 'var(--sn-stylekit-foreground-color)',
+  },
+  '.cm-tooltip-autocomplete ul li[aria-selected]': {
+    background: 'var(--sn-stylekit-info-color)',
+    color: 'var(--sn-stylekit-info-contrast-color)',
+  },
+  '.cm-completionDetail': { color: 'var(--sn-stylekit-neutral-color)' },
+  '.cm-tooltip-autocomplete ul li[aria-selected] .cm-completionDetail': { color: 'inherit' },
 })
 
 export const editorTheme = [editorStyle, syntaxHighlighting(highlightStyle)]

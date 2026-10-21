@@ -1,9 +1,11 @@
 import { Compartment, EditorState, Transaction, type ChangeSpec, type Extension, type StateCommand, type TransactionSpec } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
+import { autocompletion } from '@codemirror/autocomplete'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import type { NoteUpdate } from './bridge'
+import { completeCodeLanguage } from './code-language'
 import { formatKeymap } from './commands'
 import { collapseDataUrls } from './data-url'
 import { imageInsertion } from './image-insert'
@@ -46,8 +48,11 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         // Tab でリストを字下げできるようにする。キーボードだけで抜けるには Esc の後に Tab（CodeMirror の既定の動作）
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
         formatKeymap,
-        // 補完 UI（autocompletion）を入れていないので、HTML タグの補完ソースは登録しない
+        // 補完は言語名だけにする（override）ので、HTML タグの補完ソースは登録しない
         markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false }),
+        // 最初から候補を選んでおくと、言語名を打ち終えて Enter を押したときに、改行の代わりに候補が入る。
+        // 選ぶのは、矢印キーで動かしたときかクリック（タップ）したときだけにする
+        autocompletion({ override: [completeCodeLanguage], selectOnOpen: false, icons: false }),
         EditorView.lineWrapping,
         editorTheme,
         images.extension,
