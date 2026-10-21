@@ -103,6 +103,24 @@
   max-width: 100%;
 }
 
+/* Mermaid（diagram.ts）。図にする前と、図にできなかったときはソースを表示する */
+.preview .mermaid-block.is-rendered {
+  margin: 1em 0;
+  text-align: center;
+}
+
+.preview .mermaid-block svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.preview .mermaid-error {
+  margin: -0.5em 0 1em;
+  color: var(--sn-stylekit-danger-color);
+  font-size: 0.9em;
+  white-space: pre-wrap;
+}
+
 /* @mdit/plugin-tasklist のクラス */
 .preview .task-list-item {
   list-style: none;

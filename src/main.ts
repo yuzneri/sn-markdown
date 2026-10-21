@@ -2,6 +2,7 @@ import 'sn-extension-api/dist/sn.min.css'
 import './style.css'
 import './preview.css'
 import { connectNote } from './bridge'
+import { renderDiagrams } from './diagram'
 import { createEditor, type MarkdownEditor } from './editor'
 import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
@@ -24,7 +25,9 @@ function schedulePreview(): void {
 function renderPreview(): void {
   clearTimeout(previewTimer)
   // 編集モードではプレビューが見えないので描画しない。モードを切り替えたときに描画する
-  if (editor && layout && layout.mode !== 'edit') layout.showPreview(renderHtml(editor.text))
+  if (!editor || !layout || layout.mode === 'edit') return
+  layout.showPreview(renderHtml(editor.text))
+  renderDiagrams(layout.preview, 'light', renderPreview)
 }
 
 // エディタは最初のノートを受け取ってから作る。受け取る前に入力されると、sn-extension-api がノートのない状態で保存しようとして例外を投げる

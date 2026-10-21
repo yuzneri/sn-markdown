@@ -6,6 +6,8 @@ export interface Layout {
   readonly mode: Mode
   /** CodeMirror を置く要素 */
   readonly editorPane: HTMLElement
+  /** プレビューの HTML を入れる要素 */
+  readonly preview: HTMLElement
   setMode(mode: Mode): void
   /** サニタイズ済みの HTML を表示する */
   showPreview(html: string): void
@@ -44,6 +46,7 @@ export function createLayout(root: HTMLElement, initial: Mode, onModeChange: (mo
       return current
     },
     editorPane,
+    preview,
     setMode(mode) {
       current = mode
       panes.dataset.mode = mode
