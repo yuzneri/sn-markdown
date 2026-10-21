@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>sn-markdown harness</title>
+    <style>
+      body { margin: 0; height: 100vh; display: flex; font: 13px system-ui, sans-serif; }
+      #frame { flex: 2; min-width: 0; border: none; border-right: 1px solid #ccc; }
+      #panel { flex: 1; min-width: 280px; padding: 12px; overflow: auto; display: flex; flex-direction: column; gap: 10px; }
+      fieldset { display: flex; flex-direction: column; gap: 6px; }
+      textarea { width: 100%; box-sizing: border-box; font-family: monospace; }
+      #log { flex: 1; min-height: 120px; margin: 0; padding: 6px; overflow: auto; background: #f4f4f4; font-size: 11px; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <!-- sandbox は standardnotes/app の IframeFeatureView と同じ（allow-same-origin なし） -->
+    <iframe
+      id="frame"
+      sandbox="allow-scripts allow-top-navigation-by-user-activation allow-popups allow-modals allow-forms allow-downloads"
+      src="/"
+    ></iframe>
+    <div id="panel">
+      <fieldset>
+        <legend>環境</legend>
+        <select id="environment">
+          <option value="web">web</option>
+          <option value="desktop">desktop</option>
+          <option value="mobile">mobile</option>
+        </select>
+        <select id="theme">
+          <option value="">テーマなし</option>
+          <option value="dark">ダークテーマ</option>
+        </select>
+        <label><input type="checkbox" id="locked" /> ロック（Prevent editing）</label>
+        <label><input type="checkbox" id="echo" checked /> 保存の 1 秒後に同期エコーを返す</label>
+      </fieldset>
+      <fieldset>
+        <legend>保存されたノート</legend>
+        <textarea id="saved" rows="8" readonly></textarea>
+      </fieldset>
+      <fieldset>
+        <legend>外部からの変更（他端末の編集）</legend>
+        <textarea id="external" rows="4"></textarea>
+        <button id="push">本文を送る</button>
+      </fieldset>
+      <fieldset>
+        <legend>全体設定（componentData）</legend>
+        <textarea id="componentData" rows="3" readonly></textarea>
+      </fieldset>
+      <button id="reset">ノートと設定を初期化</button>
+      <pre id="log"></pre>
+    </div>
+    <script type="module" src="./harness.ts"></script>
+  </body>
+</html>
