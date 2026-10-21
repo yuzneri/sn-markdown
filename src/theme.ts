@@ -5,7 +5,7 @@ import { tags as t } from '@lezer/highlight'
 // 色はすべて SN のテーマ変数で書く。SN はテーマを切り替えるとき iframe 内のテーマの link を差し替えるだけなので、
 // 変数で書いておけば JS なしで追従する。使うのは、既定値と公式のダーク系テーマの両方が定義している info / success / danger / neutral だけにする。
 // warning（既定は #EBAD00）は白地で読めないので文字色に使わない
-const highlightStyle = HighlightStyle.define([
+export const highlightStyle = HighlightStyle.define([
   { tag: t.heading, fontWeight: 'bold', color: 'var(--sn-stylekit-info-color)' },
   { tag: t.strong, fontWeight: 'bold' },
   { tag: t.emphasis, fontStyle: 'italic' },

@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 // DOMPurify は DOM が要る。happy-dom では DOMPurify が何も除去しないので、サニタイズを確かめられる jsdom を使う
 import { describe, expect, it } from 'vitest'
+import { onLanguageLoaded } from './highlight'
 import { previewText, renderHtml } from './render'
 
 const parse = (markdown: string) => {
@@ -38,6 +39,18 @@ describe('renderHtml', () => {
     expect(html.querySelector('b')?.textContent).toBe('bold')
     expect(html.querySelector('img')?.getAttribute('src')).toBe('x.png')
     expect(html.innerHTML).not.toMatch(/onerror|javascript:|<script|foreignObject/i)
+  })
+
+  it('コードブロックは、言語を読み込んだ後の描画でハイライトする（クラスと data-line はサニタイズ後も残る）', async () => {
+    const source = '```python\ndef f():\n    return 1\n```'
+    const loaded = new Promise<void>((resolve) => onLanguageLoaded(resolve))
+    expect(parse(source).querySelector('pre code span')).toBeNull()
+    await loaded
+    const code = parse(source).querySelector<HTMLElement>('pre code')
+    expect(code?.className).toBe('language-python')
+    expect(code?.dataset.line).toBe('0')
+    expect(code?.querySelector('span[class]')?.textContent).toBe('def')
+    expect(code?.textContent).toBe('def f():\n    return 1\n')
   })
 
   it('<style> は除く（プラグインの画面全体に効いてしまうため）', () => {

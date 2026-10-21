@@ -3,6 +3,7 @@ import './style.css'
 import './preview.css'
 import { connectNote } from './bridge'
 import { createEditor, type MarkdownEditor } from './editor'
+import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
 import { savedMode, withMode } from './mode'
 import { previewText, renderHtml } from './render'
@@ -37,6 +38,7 @@ const bridge = connectNote((update) => {
     bridge.writePreferences(withMode(bridge.readPreferences(), bridge.environment, mode))
     renderPreview()
   })
+  onLanguageLoaded(renderPreview)
   editor = createEditor(layout.editorPane, update, (text) => {
     bridge.save(text, previewText(text))
     schedulePreview()

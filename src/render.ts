@@ -1,9 +1,15 @@
 import MarkdownIt, { type Token } from 'markdown-it'
 import { tasklist } from '@mdit/plugin-tasklist'
 import DOMPurify from 'dompurify'
+import { highlightToHtml } from './highlight'
 
 // breaks: メモでは 1 行ずつ改行して書くことが多いので、段落内の改行もそのまま改行として表示する
-const md = new MarkdownIt({ html: true, linkify: true, breaks: true }).use(tasklist, { label: false })
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  breaks: true,
+  highlight: (code: string, lang: string): string => highlightToHtml(code, lang, md.utils.escapeHtml),
+}).use(tasklist, { label: false })
 
 // スクロール同期でエディタの行とプレビューの要素を対応させるため、ブロック要素に元の行番号（0 始まり）を付ける
 md.core.ruler.push('data_line', (state) => {
