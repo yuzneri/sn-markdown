@@ -7,7 +7,7 @@ import { renderDiagrams } from './diagram'
 import { createEditor, type MarkdownEditor } from './editor'
 import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
-import { savedMode, withMode } from './mode'
+import { savedMode, withMode } from './preferences'
 import { previewText, renderHtml } from './render'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
 

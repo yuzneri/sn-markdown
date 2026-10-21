@@ -1,4 +1,4 @@
-import { MODES, type Mode } from './mode'
+import { MODES, type Mode } from './preferences'
 
 const LABELS: Record<Mode, string> = { edit: 'Edit', split: 'Split', preview: 'Preview' }
 // エラーなどのメッセージを出しておく時間
