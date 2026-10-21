@@ -7,6 +7,7 @@ import type { NoteUpdate } from './bridge'
 import { editorTheme } from './theme'
 
 export interface MarkdownEditor {
+  readonly text: string
   /** 外部（他端末など）からの本文の変更とロックの状態を反映する。本文の変更は保存も履歴への追加もしない */
   update(update: NoteUpdate): void
 }
@@ -34,6 +35,9 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, onChange:
   })
 
   return {
+    get text() {
+      return view.state.doc.toString()
+    },
     update({ text, locked }) {
       view.dispatch({
         ...(text === undefined ? {} : externalUpdate(view.state, text)),

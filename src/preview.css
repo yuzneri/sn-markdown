@@ -1,0 +1,113 @@
+/* プレビューの本文。色はエディタと同じく SN のテーマ変数だけで書く */
+.preview {
+  padding: 1rem;
+  font-family: var(--sn-stylekit-editor-font-family);
+  font-size: var(--sn-stylekit-font-size-editor);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.preview > :first-child {
+  margin-top: 0;
+}
+
+.preview h1,
+.preview h2,
+.preview h3,
+.preview h4,
+.preview h5,
+.preview h6 {
+  margin: 1.4em 0 0.6em;
+  line-height: 1.3;
+}
+
+.preview h1 {
+  font-size: 1.8em;
+}
+
+.preview h2 {
+  font-size: 1.5em;
+}
+
+.preview h3 {
+  font-size: 1.25em;
+}
+
+.preview h4,
+.preview h5,
+.preview h6 {
+  font-size: 1em;
+}
+
+.preview h1,
+.preview h2 {
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--sn-stylekit-border-color);
+}
+
+.preview a {
+  color: var(--sn-stylekit-info-color);
+}
+
+.preview code {
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  background: var(--sn-stylekit-contrast-background-color);
+  font-family: var(--sn-stylekit-monospace-font);
+  font-size: 0.9em;
+}
+
+.preview pre {
+  padding: 0.75rem 1rem;
+  border-radius: 4px;
+  background: var(--sn-stylekit-contrast-background-color);
+  overflow-x: auto;
+}
+
+.preview pre code {
+  padding: 0;
+  background: none;
+  font-size: 0.9em;
+}
+
+.preview blockquote {
+  margin: 1em 0;
+  padding: 0 1em;
+  border-left: 3px solid var(--sn-stylekit-border-color);
+  color: var(--sn-stylekit-neutral-color);
+}
+
+.preview hr {
+  border: none;
+  border-top: 1px solid var(--sn-stylekit-border-color);
+}
+
+.preview table {
+  border-collapse: collapse;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.preview th,
+.preview td {
+  padding: 0.3em 0.75em;
+  border: 1px solid var(--sn-stylekit-border-color);
+}
+
+.preview th {
+  background: var(--sn-stylekit-contrast-background-color);
+}
+
+.preview img {
+  max-width: 100%;
+}
+
+/* @mdit/plugin-tasklist のクラス */
+.preview .task-list-item {
+  list-style: none;
+}
+
+.preview .task-list-item-checkbox {
+  margin: 0 0.4em 0 -1.3em;
+}
