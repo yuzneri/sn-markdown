@@ -6,11 +6,14 @@ const fake = vi.hoisted(() => ({
   locked: (): boolean => false,
   text: '',
   environment: undefined as string | undefined,
+  initializeOptions: undefined as unknown,
 }))
 
 vi.mock('sn-extension-api', () => ({
   default: {
-    initialize: () => {},
+    initialize: (options: unknown) => {
+      fake.initializeOptions = options
+    },
     subscribe: (listener: (text: string) => void) => {
       fake.listener = listener
     },
@@ -81,6 +84,11 @@ describe('connectNote', () => {
     }
     const { receive } = connect()
     expect(() => receive('# a')).toThrow('unexpected')
+  })
+
+  it('保存を遅らせない（待っている間に届いた外部変更を、古い本文の保存で上書きしないため）', () => {
+    connect()
+    expect(fake.initializeOptions).toEqual({ debounceSave: 0 })
   })
 
   it('環境は desktop と mobile 以外を web とみなす', () => {

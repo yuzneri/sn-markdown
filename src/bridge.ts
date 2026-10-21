@@ -21,7 +21,9 @@ export interface NoteBridge {
 export function connectNote(onUpdate: (update: NoteUpdate) => void): NoteBridge {
   let current: string | undefined
 
-  snApi.initialize()
+  // 保存を遅らせると、待っている間に届いた外部変更を古い本文の保存で上書きしてしまう（sn-extension-api は予約した時点のノートを送る）。
+  // 0 なら入力のたびにその場で送り、postMessage は順に届くので、古い保存が外部変更を追い越さない
+  snApi.initialize({ debounceSave: 0 })
   // 自分の保存は親アプリがエコーせず、同期完了の再送（isMetadataUpdate）は sn-extension-api が捨てるので、
   // ここに届くのは外部からの変更だけ。本文が同じ通知（ロックの切り替え等）でエディタを書き換えるとカーソルが飛ぶので除く
   snApi.subscribe((text) => {
