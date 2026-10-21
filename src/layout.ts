@@ -1,5 +1,6 @@
 import type { Command } from '@codemirror/view'
 import { createElement, Search, TableOfContents, type IconNode } from 'lucide'
+import type { CursorContext } from './editor'
 import { element } from './dom'
 import { createFormatBar, shortcutPrefix } from './format-bar'
 import { createOutlineMenu } from './outline'
@@ -22,7 +23,7 @@ export interface Layout {
   /** ロック中は書式のボタンを無効にする */
   setLocked(locked: boolean): void
   /** カーソルが表の中にあるときは、書式のボタンの右の組を、表の行・列の操作に替える */
-  setInTable(inTable: boolean): void
+  setContext(context: CursorContext): void
   /** サニタイズ済みの HTML を表示する */
   showPreview(html: string): void
   /** バーの下に短いメッセージ（エラーなど）をしばらく出す */
@@ -119,8 +120,8 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
       updateFormatBar()
       updateTaskBoxes()
     },
-    setInTable(inTable) {
-      formatBar.setInTable(inTable)
+    setContext(context) {
+      formatBar.setContext(context)
     },
     showPreview(html) {
       preview.innerHTML = html

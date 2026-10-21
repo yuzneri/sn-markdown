@@ -4,16 +4,16 @@
 // runScopeHandlers でキーイベントをキーマップに通す
 import { afterEach, describe, expect, it } from 'vitest'
 import { EditorView, runScopeHandlers } from '@codemirror/view'
-import { createEditor, type MarkdownEditor } from './editor'
+import { createEditor, type CursorContext, type MarkdownEditor } from './editor'
 import './jsdom-range'
 
 const parents: HTMLElement[] = []
 afterEach(() => parents.splice(0).forEach((parent) => parent.remove()))
 
-function create(text: string, onTableChange: (inTable: boolean) => void = () => {}): { editor: MarkdownEditor; view: EditorView } {
+function create(text: string, onContextChange: (context: CursorContext) => void = () => {}): { editor: MarkdownEditor; view: EditorView } {
   const parent = document.body.appendChild(document.createElement('div'))
   parents.push(parent)
-  const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onTableChange })
+  const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange })
   return { editor, view: EditorView.findFromDOM(parent)! }
 }
 
@@ -40,20 +40,20 @@ describe('表のキー', () => {
   })
 })
 
-describe('onTableChange', () => {
+describe('onContextChange', () => {
   it('カーソルが表に入ったときと出たときだけ知らせる', () => {
-    const changes: boolean[] = []
+    const changes: CursorContext[] = []
     const doc = 'text\n\n| a | b |\n|---|---|\n\nafter'
-    const { view } = create(doc, (inTable) => changes.push(inTable))
+    const { view } = create(doc, (context) => changes.push(context))
     view.dispatch({ selection: { anchor: doc.indexOf('a |') } })
     view.dispatch({ selection: { anchor: doc.indexOf('b |') } })
     view.dispatch({ selection: { anchor: doc.indexOf('after') } })
-    expect(changes).toEqual([true, false])
+    expect(changes).toEqual(['table', null])
   })
 
   it('最初から表の中にカーソルがあれば、作ったときに知らせる', () => {
-    const changes: boolean[] = []
-    create('| a |\n|---|', (inTable) => changes.push(inTable))
-    expect(changes).toEqual([true])
+    const changes: CursorContext[] = []
+    create('| a |\n|---|', (context) => changes.push(context))
+    expect(changes).toEqual(['table'])
   })
 })

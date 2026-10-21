@@ -12,7 +12,7 @@ afterEach(() => parents.splice(0).forEach((parent) => parent.remove()))
 function create(locked = false) {
   const parent = document.body.appendChild(document.createElement('div'))
   parents.push(parent)
-  const editor = createEditor(parent, { text: 'find me and me', locked }, { onChange: () => {}, onError: () => {}, onTableChange: () => {} })
+  const editor = createEditor(parent, { text: 'find me and me', locked }, { onChange: () => {}, onError: () => {}, onContextChange: () => {} })
   return { editor, view: EditorView.findFromDOM(parent)!, parent }
 }
 

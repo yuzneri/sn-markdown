@@ -44,19 +44,26 @@ export interface MarkdownEditor {
   toggleTask(line: number): boolean
 }
 
+/** カーソルのある場所の種類。書式バーは、表の中なら表の組、それ以外ならブロックの組を出す */
+export type CursorContext = 'table' | null
+
+function cursorContext(state: EditorState): CursorContext {
+  return isInTable(state, state.selection.main.head) ? 'table' : null
+}
+
 export interface EditorHandlers {
   /** ユーザーの編集で本文が変わった */
   onChange(text: string): void
   /** 画像を入れられなかったなど、ユーザーに知らせること */
   onError(message: string): void
-  /** カーソルが表に入った、または表から出た（書式バーのボタンを差し替える） */
-  onTableChange(inTable: boolean): void
+  /** カーソルのある場所の種類が変わった（書式バーの右の組を差し替える） */
+  onContextChange(context: CursorContext): void
 }
 
 export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers: EditorHandlers): MarkdownEditor {
   const lock = new Compartment()
   const images = imageInsertion(handlers.onError)
-  let inTable = false
+  let context: CursorContext = null
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -88,13 +95,13 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         EditorView.updateListener.of((update) => {
           if (update.transactions.some(isLocalEdit)) handlers.onChange(update.state.doc.toString())
           // 構文木の解析が進んだだけの更新でも変わりうるので、更新のたびに調べる（調べるのはカーソルの行だけ）
-          const now = isInTable(update.state, update.state.selection.main.head)
-          if (now !== inTable) handlers.onTableChange((inTable = now))
+          const now = cursorContext(update.state)
+          if (now !== context) handlers.onContextChange((context = now))
         }),
       ],
     }),
   })
-  if (isInTable(view.state, view.state.selection.main.head)) handlers.onTableChange((inTable = true))
+  if ((context = cursorContext(view.state))) handlers.onContextChange(context)
 
   return {
     get text() {

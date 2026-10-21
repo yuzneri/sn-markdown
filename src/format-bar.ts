@@ -23,6 +23,7 @@ import {
 } from 'lucide'
 import { cycleHeading, insertBlock, insertCodeBlock, insertLink, toggleInline, toggleLinePrefix } from './commands'
 import { element } from './dom'
+import type { CursorContext } from './editor'
 import { addColumnRight, addRowBelow, alignColumn, deleteColumn, deleteRow, formatCurrentTable } from './table-commands'
 
 const TABLE = '| Column | Column |\n| --- | --- |\n|  |  |'
@@ -96,7 +97,7 @@ export interface FormatBar {
   /** プレビューのモードとロック中は、押しても意味がないので無効にする */
   setEnabled(enabled: boolean): void
   /** カーソルが表の中にあるときは、最後の組を表の行・列の操作に替える */
-  setInTable(inTable: boolean): void
+  setContext(context: CursorContext): void
 }
 
 export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
@@ -145,9 +146,9 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
     setEnabled(enabled) {
       for (const button of buttons) button.disabled = !enabled
     },
-    setInTable(inTable) {
-      for (const button of blockButtons) button.hidden = inTable
-      for (const button of tableButtons) button.hidden = !inTable
+    setContext(context) {
+      for (const button of blockButtons) button.hidden = context !== null
+      for (const button of tableButtons) button.hidden = context !== 'table'
     },
   }
 }

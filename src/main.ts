@@ -98,8 +98,8 @@ const bridge = connectNote((update) => {
     onError(message) {
       layout?.showMessage(message)
     },
-    onTableChange(inTable) {
-      layout?.setInTable(inTable)
+    onContextChange(context) {
+      layout?.setContext(context)
     },
   })
   scrollSync = enableScrollSync({
