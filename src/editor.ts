@@ -10,6 +10,7 @@ import { completeCodeLanguage } from './code-language'
 import { formatKeymap } from './commands'
 import { collapseDataUrls } from './data-url'
 import { imageInsertion } from './image-insert'
+import { pasteUrlAsLink } from './paste-link'
 import { isInTable } from './table'
 import { tableKeymap } from './table-commands'
 import { editorTheme } from './theme'
@@ -56,8 +57,10 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         formatKeymap,
         // 表の中の Tab / Enter。markdown() のキーマップ（リストの続きの Enter）と同じ優先度なので、その前に置く
         tableKeymap,
-        // 補完は言語名だけにする（override）ので、HTML タグの補完ソースは登録しない
-        markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false }),
+        // 補完は言語名だけにする（override）ので、HTML タグの補完ソースは登録しない。
+        // URL を選択範囲に貼るとリンクにする処理は、太字の中などでも効くように自前のもの（pasteUrlAsLink）を使う
+        markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false, pasteURLAsLink: false }),
+        pasteUrlAsLink,
         // 最初から候補を選んでおくと、言語名を打ち終えて Enter を押したときに、改行の代わりに候補が入る。
         // 選ぶのは、矢印キーで動かしたときかクリック（タップ）したときだけにする
         autocompletion({ override: [completeCodeLanguage], selectOnOpen: false, icons: false }),
