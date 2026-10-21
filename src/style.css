@@ -55,6 +55,11 @@ body {
   cursor: pointer;
 }
 
+/* display を指定しているので、hidden 属性だけでは隠れない（表の中で、ボタンの組を入れ替えるのに使う） */
+.format-button[hidden] {
+  display: none;
+}
+
 .format-button:hover:not(:disabled) {
   background: var(--sn-stylekit-contrast-background-color);
 }

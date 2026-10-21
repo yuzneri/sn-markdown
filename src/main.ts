@@ -85,6 +85,9 @@ const bridge = connectNote((update) => {
     onError(message) {
       layout?.showMessage(message)
     },
+    onTableChange(inTable) {
+      layout?.setInTable(inTable)
+    },
   })
   scrollSync = enableScrollSync({
     editor,

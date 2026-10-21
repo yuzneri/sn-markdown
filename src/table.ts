@@ -1,4 +1,4 @@
-import { ensureSyntaxTree } from '@codemirror/language'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import { labelDataUrls } from './data-url'
 
@@ -69,6 +69,24 @@ export function tableAt(state: EditorState, pos: number): Table | null {
     return { from, to, prefix: state.sliceDoc(from, row.from), cells: spans.map((cell) => cell.text), spans }
   })
   return { from: lines[0].from, to: lines[lines.length - 1].to, lines }
+}
+
+/**
+ * pos の行が表の中か（書式バーのボタンを差し替えるのに使う）。カーソルが動くたびに呼ぶので、構文木の解析は待たず、
+ * 行の区切りも読まない。解析が進めばエディタが更新されるので、そのときにまた調べられる
+ */
+export function isInTable(state: EditorState, pos: number): boolean {
+  const line = state.doc.lineAt(pos)
+  let found = false
+  syntaxTree(state).iterate({
+    from: line.from,
+    to: line.to,
+    enter: (node) => {
+      if (node.name === 'Table') found = true
+      return !found
+    },
+  })
+  return found
 }
 
 /** pos が表のどのセルにあるか。| の上や行頭の記号の上は、近いほうのセルにする */
