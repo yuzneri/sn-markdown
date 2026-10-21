@@ -8,8 +8,10 @@ import {
   deleteColumn,
   deleteRow,
   formatCurrentTable,
+  indentOrNextCell,
   nextCell,
   nextRow,
+  outdentOrPreviousCell,
   previousCell,
 } from './table-commands'
 
@@ -135,5 +137,21 @@ describe('行と列の操作（書式バーのボタン）', () => {
     for (const command of [addRowBelow, deleteRow, addColumnRight, deleteColumn, alignColumn('left'), formatCurrentTable]) {
       expect(run(command, 'text‸')).toBe(false)
     }
+  })
+})
+
+describe('字下げのボタン（タッチの端末の Tab の代わり）', () => {
+  it('表の中では、次・前のセルに移る', () => {
+    expect(run(indentOrNextCell, table('| a‸ | b |', '|---|---|'))).toBe(table('| a   | b‸   |', '| --- | --- |'))
+    expect(run(outdentOrPreviousCell, table('| a | b‸ |', '|---|---|'))).toBe(table('| a‸   | b   |', '| --- | --- |'))
+  })
+
+  it('表の外では、行を字下げする・字下げを解除する', () => {
+    expect(run(indentOrNextCell, '- item‸')).toBe('  - item‸')
+    expect(run(outdentOrPreviousCell, '  - item‸')).toBe('- item‸')
+  })
+
+  it('ロック中は何もしない', () => {
+    expect(run(indentOrNextCell, '- item‸', { readOnly: true })).toBe(false)
   })
 })

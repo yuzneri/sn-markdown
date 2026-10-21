@@ -1,3 +1,4 @@
+import { redo, undo } from '@codemirror/commands'
 import type { Command } from '@codemirror/view'
 import {
   Bold,
@@ -11,11 +12,14 @@ import {
   Italic,
   Link,
   List,
+  ListIndentDecrease,
+  ListIndentIncrease,
   ListOrdered,
   ListTodo,
   Minus,
   Omega,
   Radical,
+  Redo2,
   Sigma,
   SquareCode,
   SquareSigma,
@@ -28,6 +32,7 @@ import {
   TextAlignStart,
   TextQuote,
   Type,
+  Undo2,
   WandSparkles,
   type IconNode,
 } from 'lucide'
@@ -35,7 +40,7 @@ import { cycleHeading, insertBlock, insertCodeBlock, insertLink, insertMath, ins
 import { element } from './dom'
 import { createSymbolMenu } from './symbols'
 import type { CursorContext } from './editor'
-import { addColumnRight, addRowBelow, alignColumn, deleteColumn, deleteRow, formatCurrentTable } from './table-commands'
+import { addColumnRight, addRowBelow, alignColumn, deleteColumn, deleteRow, formatCurrentTable, indentOrNextCell, outdentOrPreviousCell } from './table-commands'
 
 const TABLE = '| Column | Column |\n| --- | --- |\n|  |  |'
 
@@ -50,6 +55,8 @@ interface Action {
   label: string
   /** ショートカットのキー（Mod と組み合わせる） */
   key?: string
+  /** Mod と組み合わせないキーの説明（Tab など） */
+  hint?: string
   /** コマンドがなければ画像の挿入（ファイルの選択）。symbols なら記号の一覧を開く */
   command?: Command
   menu?: 'symbols'
@@ -66,6 +73,14 @@ const INTEGRAL: IconNode = [['path', { d: 'M16 3.5a2.5 2.5 0 0 0-4 1.8v13.4A2.5 
 
 // 仕切りで区切った組ごとに並べる。最後の組は、カーソルが表の中にあるときだけ TABLE_GROUP と入れ替える
 const GROUPS: Action[][] = [
+  // 元に戻す・やり直し・字下げ。スマホのキーボードには Ctrl+Z や Tab がないので、ボタンでもできるようにする。
+  // 字下げは Tab と同じで、表の中では次・前のセルに移る
+  [
+    { icon: Undo2, label: 'Undo', key: 'Z', command: undo },
+    { icon: Redo2, label: 'Redo', hint: isMac() ? '⇧⌘Z' : 'Ctrl+Y', command: redo },
+    { icon: ListIndentDecrease, label: 'Outdent', hint: 'Shift+Tab', command: outdentOrPreviousCell },
+    { icon: ListIndentIncrease, label: 'Indent', hint: 'Tab', command: indentOrNextCell },
+  ],
   [
     { icon: Heading, label: 'Heading', command: cycleHeading },
     { icon: Bold, label: 'Bold', key: 'B', command: toggleInline('**') },
@@ -155,7 +170,8 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
   const createButton = (action: Action) => {
     const button = element('button', 'format-button')
     button.type = 'button'
-    const title = action.key ? `${action.label} (${shortcutPrefix()}${action.key})` : action.label
+    const shortcut = action.key ? `${shortcutPrefix()}${action.key}` : action.hint
+    const title = shortcut ? `${action.label} (${shortcut})` : action.label
     button.title = title
     button.setAttribute('aria-label', title)
     button.append(createElement(action.icon, { width: 16, height: 16, 'aria-hidden': 'true' }))
@@ -174,11 +190,11 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
 
   const groups = GROUPS.map((group, index) => {
     if (index > 0) bar.append(element('span', 'format-separator'))
-    return group.map(createButton)
+    return group.map((action) => createButton(action))
   })
   const blockButtons = groups[groups.length - 1]
-  const tableButtons = TABLE_GROUP.map(createButton)
-  const mathButtons = MATH_GROUP.map(createButton)
+  const tableButtons = TABLE_GROUP.map((action) => createButton(action))
+  const mathButtons = MATH_GROUP.map((action) => createButton(action))
   for (const button of [...tableButtons, ...mathButtons]) button.hidden = true
   const buttons = [...groups.flat(), ...tableButtons, ...mathButtons]
   bar.append(imageInput)
@@ -198,5 +214,9 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
 }
 
 export function shortcutPrefix(): string {
-  return /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl+'
+  return isMac() ? '⌘' : 'Ctrl+'
+}
+
+function isMac(): boolean {
+  return /Mac|iPhone|iPad/.test(navigator.platform)
 }

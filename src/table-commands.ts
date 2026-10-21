@@ -1,5 +1,6 @@
 import { Prec, type EditorState, type StateCommand, type TransactionSpec } from '@codemirror/state'
 import { keymap } from '@codemirror/view'
+import { indentLess, indentMore } from '@codemirror/commands'
 import { delimiterCell, formatTable, locate, tableAt, type Align, type CellPosition, type Table, type TableLine } from './table'
 
 /** 移動先のセル。offset が end なら、セルの中身の末尾に置く（中身を選ぶと、打ったときに中身が消えるため） */
@@ -182,6 +183,12 @@ export const formatCurrentTable: StateCommand = ({ state, dispatch }) => {
   dispatch(state.update(replaceTable(state, table, lines, { line: at.line, column: at.column, offset: at.offset })))
   return true
 }
+
+/** Tab と同じ（字下げのボタン）。表の中では次のセル、それ以外では字下げ。タッチの端末のキーボードには Tab がないので、ボタンにする */
+export const indentOrNextCell: StateCommand = (target) => nextCell(target) || indentMore(target)
+
+/** Shift-Tab と同じ（字下げ解除のボタン）。表の中では前のセル、それ以外では字下げ解除 */
+export const outdentOrPreviousCell: StateCommand = (target) => previousCell(target) || indentLess(target)
 
 /**
  * 表の中だけで効くキー。表の外では false を返し、いまの動き（Tab の字下げ、Enter のリストの続きなど）に譲る。
