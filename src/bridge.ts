@@ -11,7 +11,8 @@ export interface NoteUpdate {
 export interface NoteBridge {
   /** 最初の NoteUpdate を受け取った後でだけ正しい値になる */
   readonly environment: Environment
-  save(text: string): void
+  /** preview はノート一覧に表示する文（preview_plain） */
+  save(text: string, preview: string): void
   readPreferences(): Record<string, unknown>
   writePreferences(preferences: Record<string, unknown>): void
 }
@@ -40,8 +41,10 @@ export function connectNote(onUpdate: (update: NoteUpdate) => void): NoteBridge 
     get environment() {
       return toEnvironment(snApi.environment)
     },
-    save(text) {
+    save(text, preview) {
       current = text
+      // text の setter がその場で保存を送る（debounceSave: 0）ので、preview はそれより先に入れる
+      snApi.preview = preview
       snApi.text = text
     },
     readPreferences() {

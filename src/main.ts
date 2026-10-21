@@ -2,6 +2,7 @@ import 'sn-extension-api/dist/sn.min.css'
 import './style.css'
 import { connectNote } from './bridge'
 import { createEditor, type MarkdownEditor } from './editor'
+import { previewText } from './render'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 let editor: MarkdownEditor | undefined
@@ -11,6 +12,6 @@ const bridge = connectNote((update) => {
   if (editor) {
     editor.update(update)
   } else {
-    editor = createEditor(app, update, (text) => bridge.save(text))
+    editor = createEditor(app, update, (text) => bridge.save(text, previewText(text)))
   }
 })

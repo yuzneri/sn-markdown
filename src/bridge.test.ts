@@ -5,6 +5,7 @@ const fake = vi.hoisted(() => ({
   listener: undefined as ((text: string) => void) | undefined,
   locked: (): boolean => false,
   text: '',
+  writes: [] as string[],
   environment: undefined as string | undefined,
   initializeOptions: undefined as unknown,
 }))
@@ -22,6 +23,10 @@ vi.mock('sn-extension-api', () => ({
     },
     set text(value: string) {
       fake.text = value
+      fake.writes.push('text')
+    },
+    set preview(_: string) {
+      fake.writes.push('preview')
     },
     get environment() {
       return fake.environment
@@ -61,7 +66,7 @@ describe('connectNote', () => {
   it('自分が保存した本文と同じ通知では本文を渡さず、外部の変更は渡す', () => {
     const { bridge, updates, receive } = connect()
     receive('# a')
-    bridge.save('# ab')
+    bridge.save('# ab', 'ab')
     expect(fake.text).toBe('# ab')
     receive('# ab')
     expect(updates.at(-1)).toEqual({ locked: false })
@@ -84,6 +89,14 @@ describe('connectNote', () => {
     }
     const { receive } = connect()
     expect(() => receive('# a')).toThrow('unexpected')
+  })
+
+  it('一覧用のプレビュー文は本文より先に入れる（本文の setter がその場で保存を送るため）', () => {
+    const { bridge, receive } = connect()
+    receive('# a')
+    fake.writes = []
+    bridge.save('# ab', 'ab')
+    expect(fake.writes).toEqual(['preview', 'text'])
   })
 
   it('保存を遅らせない（待っている間に届いた外部変更を、古い本文の保存で上書きしないため）', () => {
