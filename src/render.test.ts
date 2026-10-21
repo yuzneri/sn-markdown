@@ -2,7 +2,7 @@
 // DOMPurify は DOM が要る。happy-dom では DOMPurify が何も除去しないので、サニタイズを確かめられる jsdom を使う
 import { describe, expect, it } from 'vitest'
 import { onLanguageLoaded } from './highlight'
-import { previewText, renderHtml } from './render'
+import { headings, previewText, renderHtml } from './render'
 
 const parse = (markdown: string) => {
   const container = document.createElement('div')
@@ -79,6 +79,27 @@ describe('renderHtml', () => {
     const links = [...html.querySelectorAll('a')]
     expect(links).toHaveLength(4)
     expect(links.every((link) => link.rel === 'noopener noreferrer')).toBe(true)
+  })
+})
+
+describe('headings', () => {
+  it('見出しの階層、記号を除いた文字、元の行（プレビューの data-line と同じ）を返す', () => {
+    const doc = '# Title\n\ntext\n\n## **Bold** and `code`\n\nSetext\n---\n\n### [Link](https://example.com) ###'
+    expect(headings(doc)).toEqual([
+      { level: 1, text: 'Title', line: 0 },
+      { level: 2, text: 'Bold and code', line: 4 },
+      { level: 2, text: 'Setext', line: 6 },
+      { level: 3, text: 'Link', line: 9 },
+    ])
+    const html = parse(doc)
+    expect([...html.querySelectorAll('h1, h2, h3')].map((element) => element.getAttribute('data-line'))).toEqual(['0', '4', '6', '9'])
+  })
+
+  it('コードブロックの中の # は見出しにしない。引用やリストの中の見出しは拾う', () => {
+    expect(headings('```\n# not a heading\n```\n\n> # quoted\n\n- # in list')).toEqual([
+      { level: 1, text: 'quoted', line: 4 },
+      { level: 1, text: 'in list', line: 6 },
+    ])
   })
 })
 

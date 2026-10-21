@@ -63,6 +63,26 @@ export function previewText(markdown: string): string {
   return chars.length <= PREVIEW_LENGTH ? chars.join('') : `${chars.slice(0, PREVIEW_LENGTH).join('')}…`
 }
 
+export interface Heading {
+  /** 1〜6 */
+  level: number
+  /** 記法の記号を除いた文字（プレビューに出る文字） */
+  text: string
+  /** 元の行（0 始まり）。プレビューの見出しの要素の data-line と同じ */
+  line: number
+}
+
+/** 見出しの一覧（見出しのメニュー）。プレビューと同じ解析なので、コードブロックの中の # は拾わず、行もプレビューの要素と一致する */
+export function headings(markdown: string): Heading[] {
+  const tokens = md.parse(markdown, {})
+  const result: Heading[] = []
+  tokens.forEach((token, index) => {
+    if (token.type !== 'heading_open' || !token.map) return
+    result.push({ level: Number(token.tag.slice(1)), text: inlineText(tokens[index + 1]?.children ?? []).trim(), line: token.map[0] })
+  })
+  return result
+}
+
 function inlineText(tokens: Token[]): string {
   return tokens
     .map((token) => {
