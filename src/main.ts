@@ -1,16 +1,16 @@
 import 'sn-extension-api/dist/sn.min.css'
 import './style.css'
 import { connectNote } from './bridge'
+import { createEditor, type MarkdownEditor } from './editor'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
-const textarea = document.createElement('textarea')
-textarea.className = 'editor'
-textarea.spellcheck = false
-app.append(textarea)
+let editor: MarkdownEditor | undefined
 
-const bridge = connectNote(({ text, locked }) => {
-  if (text !== undefined) textarea.value = text
-  textarea.readOnly = locked
+// エディタは最初のノートを受け取ってから作る。受け取る前に入力されると、sn-extension-api がノートのない状態で保存しようとして例外を投げる
+const bridge = connectNote((update) => {
+  if (editor) {
+    editor.update(update)
+  } else {
+    editor = createEditor(app, update, (text) => bridge.save(text))
+  }
 })
-
-textarea.addEventListener('input', () => bridge.save(textarea.value))

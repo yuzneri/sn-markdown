@@ -15,17 +15,3 @@ body {
   flex-direction: column;
   height: 100%;
 }
-
-.editor {
-  flex: 1;
-  min-height: 0;
-  box-sizing: border-box;
-  padding: 1rem;
-  border: none;
-  outline: none;
-  resize: none;
-  background: transparent;
-  color: inherit;
-  font-family: var(--sn-stylekit-monospace-font);
-  font-size: var(--sn-stylekit-font-size-editor);
-}
