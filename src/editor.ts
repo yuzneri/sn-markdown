@@ -24,8 +24,13 @@ export interface MarkdownEditor {
   readonly lineCount: number
   /** 表示している先頭の行（0 始まり、小数で行の中の位置も表す） */
   topLine(): number
-  /** line（0 始まり、小数を含む）が表示の先頭に来るようにスクロールする */
+  /** line（0 始まり、小数を含む）が表示の先頭に来るようにスクロールする（スクロール同期用。すぐに動かす） */
   scrollToLine(line: number): void
+  /**
+   * line（0 始まり）を表示の一番上にスクロールする（見出しへのジャンプ用）。まだ描いていない行は高さが推定なので、
+   * scrollToLine だと描いた後にずれる。CodeMirror に高さを測ってから動かさせる
+   */
+  revealLine(line: number): void
   /** 外部（他端末など）からの本文の変更とロックの状態を反映する。本文の変更は保存も履歴への追加もしない */
   update(update: NoteUpdate): void
   /** 画像をカーソルの位置に埋め込む */
@@ -109,6 +114,11 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
       const index = Math.min(doc.lines - 1, Math.max(0, Math.floor(line)))
       const block = view.lineBlockAt(doc.line(index + 1).from)
       view.scrollDOM.scrollTop += block.top + (line - index) * block.height - visibleTop(view)
+    },
+    revealLine(line) {
+      const { doc } = view.state
+      const pos = doc.line(Math.min(doc.lines, Math.max(1, line + 1))).from
+      view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: 0 }) })
     },
     update({ text, locked }) {
       view.dispatch({

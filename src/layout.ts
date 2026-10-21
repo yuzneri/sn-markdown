@@ -1,8 +1,10 @@
 import type { Command } from '@codemirror/view'
-import { createElement, Search, type IconNode } from 'lucide'
+import { createElement, Search, TableOfContents, type IconNode } from 'lucide'
 import { element } from './dom'
 import { createFormatBar, shortcutPrefix } from './format-bar'
+import { createOutlineMenu } from './outline'
 import { MODES, type Mode } from './preferences'
+import type { Heading } from './render'
 
 const LABELS: Record<Mode, string> = { edit: 'Edit', split: 'Split', preview: 'Preview' }
 // エラーなどのメッセージを出しておく時間
@@ -25,6 +27,8 @@ export interface Layout {
   showPreview(html: string): void
   /** バーの下に短いメッセージ（エラーなど）をしばらく出す */
   showMessage(message: string): void
+  /** プレビューを、元の行が line の要素（data-line）が一番上に来るようにスクロールする */
+  scrollPreviewToLine(line: number): void
 }
 
 export interface LayoutHandlers {
@@ -35,6 +39,10 @@ export interface LayoutHandlers {
   onImageFiles(files: File[]): void
   /** 検索のボタンが押された */
   onSearch(): void
+  /** 見出しの一覧を開くときに、いまの本文の見出しを返す */
+  headings(): Heading[]
+  /** 見出しの一覧で見出しが選ばれた（line は元の行） */
+  onHeading(line: number): void
 }
 
 export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutHandlers): Layout {
@@ -50,7 +58,9 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
   // 検索などのボタン。書式ではないので書式のボタンとは分け、モードの切り替えの左に置く（横にスクロールしても隠れない）
   const tools = element('div', 'tools')
   const searchButton = toolButton(Search, `Find and replace (${shortcutPrefix()}F)`, handlers.onSearch)
-  tools.append(searchButton)
+  const outlineButton = toolButton(TableOfContents, 'Headings', () => outline.toggle())
+  const outline = createOutlineMenu(outlineButton, handlers.headings, handlers.onHeading)
+  tools.append(searchButton, outlineButton)
 
   const modes = element('div', 'modes')
   modes.setAttribute('role', 'group')
@@ -67,7 +77,7 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     return button
   })
   modes.append(...buttons)
-  toolbar.append(formatBar.element, tools, modes, message)
+  toolbar.append(formatBar.element, tools, modes, message, outline.element)
 
   const panes = element('div', 'panes')
   const editorPane = element('div', 'pane editor-pane')
@@ -115,6 +125,10 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     showPreview(html) {
       preview.innerHTML = html
       updateTaskBoxes()
+    },
+    scrollPreviewToLine(line) {
+      const target = preview.querySelector(`[data-line="${line}"]`)
+      if (target) previewPane.scrollTop += target.getBoundingClientRect().top - previewPane.getBoundingClientRect().top
     },
     showMessage(text) {
       clearTimeout(messageTimer)

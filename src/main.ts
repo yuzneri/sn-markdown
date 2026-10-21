@@ -8,7 +8,7 @@ import { createEditor, type MarkdownEditor } from './editor'
 import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
 import { savedMode, withMode } from './preferences'
-import { previewText, renderHtml } from './render'
+import { headings, previewText, renderHtml } from './render'
 import { enableScrollSync, type ScrollSync } from './scroll-sync'
 import { enableTaskToggle } from './task'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
@@ -76,6 +76,12 @@ const bridge = connectNote((update) => {
     },
     onSearch() {
       editor?.toggleSearch()
+    },
+    headings: () => (editor ? headings(editor.text) : []),
+    onHeading(line) {
+      // 見えている側だけを動かす。Split では両方を動かすので、スクロール同期がどちらを起点にしても同じ見出しになる
+      if (layout?.mode !== 'preview') editor?.revealLine(line)
+      if (layout?.mode !== 'edit') layout?.scrollPreviewToLine(line)
     },
   })
   layout.setLocked(update.locked)
