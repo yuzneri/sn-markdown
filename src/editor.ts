@@ -4,6 +4,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import type { NoteUpdate } from './bridge'
+import { formatKeymap } from './commands'
 import { collapseDataUrls } from './data-url'
 import { imageInsertion } from './image-insert'
 import { editorTheme } from './theme'
@@ -35,6 +36,7 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         history(),
         // Tab でリストを字下げできるようにする。キーボードだけで抜けるには Esc の後に Tab（CodeMirror の既定の動作）
         keymap.of([...defaultKeymap, ...historyKeymap, indentWithTab]),
+        formatKeymap,
         // 補完 UI（autocompletion）を入れていないので、HTML タグの補完ソースは登録しない
         markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false }),
         EditorView.lineWrapping,
