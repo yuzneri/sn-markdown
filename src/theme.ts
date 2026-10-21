@@ -40,7 +40,21 @@ const editorStyle = EditorView.theme({
   },
   // 既定のキャレット色は黒（ライト）か白（ダーク）の固定値
   '.cm-content': { padding: '1rem 0', caretColor: 'var(--sn-stylekit-editor-foreground-color)' },
-  '.cm-line': { padding: '0 1rem' },
+  // 左には折りたたみの印の列があるので、行の左の余白は小さくする
+  '.cm-line': { padding: '0 1rem 0 0.25rem' },
+  // 折りたたみの印の列（foldGutter）。既定は灰色の地と境界線なので、本文の地に溶け込ませる
+  '.cm-gutters': { backgroundColor: 'transparent', border: 'none', color: 'var(--sn-stylekit-neutral-color)' },
+  '.cm-foldGutter .cm-gutterElement': { paddingLeft: '0.5rem' },
+  '.cm-foldMarker': { display: 'inline-flex', height: '100%', alignItems: 'center', opacity: '0.6', cursor: 'pointer' },
+  '.cm-foldMarker:hover': { opacity: '1' },
+  // 畳んだところ（…）。押すと開く
+  '.cm-foldPlaceholder': {
+    border: 'none',
+    borderRadius: '3px',
+    padding: '0 0.4em',
+    backgroundColor: 'var(--sn-stylekit-contrast-background-color)',
+    color: 'var(--sn-stylekit-neutral-color)',
+  },
   // 埋め込んだ画像の data: URL を折りたたんだ表示（data-url.ts）
   '.cm-data-url': {
     padding: '0 0.4em',

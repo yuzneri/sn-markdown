@@ -3,8 +3,10 @@ import { EditorView, keymap, type Command } from '@codemirror/view'
 import { autocompletion } from '@codemirror/autocomplete'
 import { closeSearchPanel, openSearchPanel, search, searchKeymap, searchPanelOpen } from '@codemirror/search'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { foldGutter, foldKeymap } from '@codemirror/language'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
+import { ChevronDown, ChevronRight, createElement } from 'lucide'
 import type { NoteUpdate } from './bridge'
 import { closeCodeFence } from './code-fence'
 import { completeCodeLanguage } from './code-language'
@@ -75,7 +77,9 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         lock.of(lockExtension(initial.locked)),
         history(),
         // Tab でリストを字下げできるようにする。キーボードだけで抜けるには Esc の後に Tab（CodeMirror の既定の動作）
-        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, indentWithTab]),
+        keymap.of([...defaultKeymap, ...historyKeymap, ...searchKeymap, ...foldKeymap, indentWithTab]),
+        // 見出し（次の同じか上の階層の見出しまで）、コードブロック、引用、表などを、行の左の印で畳む。畳める範囲は lang-markdown が決める
+        foldGutter({ markerDOM: foldMarker }),
         // 長いノートでは、画面に見えている部分しか描かないので、ブラウザの検索では画面の外の文字が見つからない
         search({ top: true }),
         formatKeymap,
@@ -158,6 +162,15 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
       images.insert(view, files).catch((error: unknown) => handlers.onError(error instanceof Error ? error.message : String(error)))
     },
   }
+}
+
+// 折りたたみの印。開いているときは下向き、畳んでいるときは右向きの Lucide の chevron
+function foldMarker(open: boolean): HTMLElement {
+  const marker = document.createElement('span')
+  marker.className = 'cm-foldMarker'
+  marker.title = open ? 'Fold' : 'Unfold'
+  marker.append(createElement(open ? ChevronDown : ChevronRight, { width: 14, height: 14, 'aria-hidden': 'true' }))
+  return marker
 }
 
 // 表示の先頭の、文書の先頭からの高さ。documentTop は文書の先頭の画面上の位置で、スクロールすると上に動く
