@@ -1,4 +1,4 @@
-import type { StateCommand } from '@codemirror/state'
+import type { Command } from '@codemirror/view'
 import {
   Bold,
   Code,
@@ -17,7 +17,7 @@ import {
   TextQuote,
   type IconNode,
 } from 'lucide'
-import { cycleHeading, insertBlock, insertLink, toggleInline, toggleLinePrefix, wrapCodeBlock } from './commands'
+import { cycleHeading, insertBlock, insertCodeBlock, insertLink, toggleInline, toggleLinePrefix } from './commands'
 import { element } from './dom'
 
 const TABLE = '| Column | Column |\n| --- | --- |\n|  |  |'
@@ -34,7 +34,7 @@ interface Action {
   /** ショートカットのキー（Mod と組み合わせる） */
   key?: string
   /** コマンドがなければ画像の挿入（ファイルの選択） */
-  command?: StateCommand
+  command?: Command
 }
 
 // 仕切りで区切った組ごとに並べる
@@ -54,7 +54,7 @@ const GROUPS: Action[][] = [
     { icon: ListTodo, label: 'Task list', command: toggleLinePrefix('task') },
   ],
   [
-    { icon: SquareCode, label: 'Code block', command: wrapCodeBlock() },
+    { icon: SquareCode, label: 'Code block', command: insertCodeBlock },
     // 入れた後に最初の列名を選んで、そのまま書き換えられるようにする
     { icon: Table, label: 'Table', command: insertBlock(TABLE, selecting(TABLE, 'Column')) },
     { icon: Minus, label: 'Horizontal rule', command: insertBlock('---') },
@@ -63,7 +63,7 @@ const GROUPS: Action[][] = [
 ]
 
 export interface FormatBarHandlers {
-  onCommand(command: StateCommand): void
+  onCommand(command: Command): void
   onImageFiles(files: File[]): void
 }
 

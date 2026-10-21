@@ -1,5 +1,5 @@
-import { Compartment, EditorState, Transaction, type ChangeSpec, type Extension, type StateCommand, type TransactionSpec } from '@codemirror/state'
-import { EditorView, keymap } from '@codemirror/view'
+import { Compartment, EditorState, Transaction, type ChangeSpec, type Extension, type TransactionSpec } from '@codemirror/state'
+import { EditorView, keymap, type Command } from '@codemirror/view'
 import { autocompletion } from '@codemirror/autocomplete'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
@@ -25,7 +25,7 @@ export interface MarkdownEditor {
   /** 画像をカーソルの位置に埋め込む */
   insertImages(files: File[]): void
   /** 書式のコマンドを実行し、エディタにフォーカスを戻す（ボタンから続けて入力できるように） */
-  run(command: StateCommand): void
+  run(command: Command): void
 }
 
 export interface EditorHandlers {

@@ -130,12 +130,12 @@ describe('insertBlock', () => {
 })
 
 describe('wrapCodeBlock', () => {
-  it('選んだ行を ``` で囲む', () => {
-    expect(run(wrapCodeBlock(), 'text\n«const a = 1»\nmore')).toBe('text\n\n```\nconst a = 1\n```|\n\nmore')
+  it('選んだ行を ``` で囲み、言語名を書く位置にカーソルを置く', () => {
+    expect(run(wrapCodeBlock, 'text\n«const a = 1»\nmore')).toBe('text\n\n```|\nconst a = 1\n```\n\nmore')
   })
 
-  it('選択がなければ空のコードブロックを入れ、中にカーソルを置く', () => {
-    expect(run(wrapCodeBlock(), '|')).toBe('```\n|\n```')
-    expect(run(wrapCodeBlock('mermaid'), 'a\n|')).toBe('a\n\n```mermaid\n|\n```')
+  it('選択がなければ、中の行のない空のコードブロックを入れる', () => {
+    expect(run(wrapCodeBlock, '|')).toBe('```|\n```')
+    expect(run(wrapCodeBlock, 'a\n|')).toBe('a\n\n```|\n```')
   })
 })

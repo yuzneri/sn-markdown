@@ -1,4 +1,4 @@
-import type { StateCommand } from '@codemirror/state'
+import type { Command } from '@codemirror/view'
 import { element } from './dom'
 import { createFormatBar } from './format-bar'
 import { MODES, type Mode } from './preferences'
@@ -27,7 +27,7 @@ export interface Layout {
 export interface LayoutHandlers {
   onModeChange(mode: Mode): void
   /** 書式のボタンが押された */
-  onCommand(command: StateCommand): void
+  onCommand(command: Command): void
   /** Image ボタンで画像が選ばれた */
   onImageFiles(files: File[]): void
 }

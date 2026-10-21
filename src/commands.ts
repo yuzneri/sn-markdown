@@ -1,5 +1,6 @@
+import { startCompletion } from '@codemirror/autocomplete'
 import { EditorSelection, Prec, type ChangeSpec, type EditorState, type StateCommand, type Text } from '@codemirror/state'
-import { keymap } from '@codemirror/view'
+import { keymap, type Command } from '@codemirror/view'
 
 /**
  * 選択範囲を marker で囲む。すでに囲まれていれば外す。選択がなければ marker を 2 つ入れ、間にカーソルを置く。
@@ -147,32 +148,43 @@ export function insertBlock(block: string, select?: { from: number; to: number }
   }
 }
 
-/** 選んだ行をコードブロックで囲む。選択がなければ空のコードブロックを入れ、中にカーソルを置く */
-export function wrapCodeBlock(language = ''): StateCommand {
-  return (target) => {
-    const { state } = target
-    const range = state.selection.main
-    if (range.empty) return insertBlock(`\`\`\`${language}\n\n\`\`\``, { from: 4 + language.length, to: 4 + language.length })(target)
-    if (state.readOnly) return false
-    const first = state.doc.lineAt(range.from)
-    const last = state.doc.lineAt(range.to)
-    const body = state.sliceDoc(first.from, last.to)
-    return insertBlockAt(target, first.from, last.to, `\`\`\`${language}\n${body}\n\`\`\``)
-  }
+/**
+ * 選んだ行をコードブロックで囲む。選択がなければ空のコードブロックを入れる。
+ * カーソルは開始フェンスの後ろ（言語名を書く位置）に置く。空のブロックは中の行を作らずに入れるので、
+ * 言語名を書いて Enter を押すと、そのまま中の行に移る
+ */
+export const wrapCodeBlock: StateCommand = (target) => {
+  const { state } = target
+  const range = state.selection.main
+  if (range.empty) return insertBlock('```\n```', { from: 3, to: 3 })(target)
+  if (state.readOnly) return false
+  const first = state.doc.lineAt(range.from)
+  const last = state.doc.lineAt(range.to)
+  const body = state.sliceDoc(first.from, last.to)
+  return insertBlockAt(target, first.from, last.to, `\`\`\`\n${body}\n\`\`\``, 3)
 }
 
+/** Code block のボタン。コードブロックを入れてから、言語名の候補を開く（code-language.ts） */
+export const insertCodeBlock: Command = (view) => {
+  if (!wrapCodeBlock(view)) return false
+  startCompletion(view)
+  return true
+}
+
+/** from から to をブロックで置き換え、カーソルをブロックの中の cursor の位置に置く */
 function insertBlockAt(
   { state, dispatch }: Parameters<StateCommand>[0],
   from: number,
   to: number,
   block: string,
+  cursor: number,
 ): boolean {
   const before = blockSeparator(state.doc, from, 'before')
   const after = blockSeparator(state.doc, to, 'after')
   dispatch(
     state.update({
       changes: { from, to, insert: before + block + after },
-      selection: EditorSelection.cursor(from + before.length + block.length),
+      selection: EditorSelection.cursor(from + before.length + cursor),
       scrollIntoView: true,
       userEvent: 'input',
     }),
