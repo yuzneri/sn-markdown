@@ -11,6 +11,13 @@ import { editorTheme } from './theme'
 
 export interface MarkdownEditor {
   readonly text: string
+  /** スクロールする要素と行数（スクロール同期で使う） */
+  readonly scroller: HTMLElement
+  readonly lineCount: number
+  /** 表示している先頭の行（0 始まり、小数で行の中の位置も表す） */
+  topLine(): number
+  /** line（0 始まり、小数を含む）が表示の先頭に来るようにスクロールする */
+  scrollToLine(line: number): void
   /** 外部（他端末など）からの本文の変更とロックの状態を反映する。本文の変更は保存も履歴への追加もしない */
   update(update: NoteUpdate): void
   /** 画像をカーソルの位置に埋め込む */
@@ -56,6 +63,24 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
     get text() {
       return view.state.doc.toString()
     },
+    get scroller() {
+      return view.scrollDOM
+    },
+    get lineCount() {
+      return view.state.doc.lines
+    },
+    topLine() {
+      const height = visibleTop(view)
+      const block = view.lineBlockAtHeight(height)
+      const line = view.state.doc.lineAt(block.from).number - 1
+      return line + Math.min(1, Math.max(0, (height - block.top) / Math.max(1, block.height)))
+    },
+    scrollToLine(line) {
+      const { doc } = view.state
+      const index = Math.min(doc.lines - 1, Math.max(0, Math.floor(line)))
+      const block = view.lineBlockAt(doc.line(index + 1).from)
+      view.scrollDOM.scrollTop += block.top + (line - index) * block.height - visibleTop(view)
+    },
     update({ text, locked }) {
       view.dispatch({
         ...(text === undefined ? {} : externalUpdate(view.state, text)),
@@ -70,6 +95,11 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
       images.insert(view, files).catch((error: unknown) => handlers.onError(error instanceof Error ? error.message : String(error)))
     },
   }
+}
+
+// 表示の先頭の、文書の先頭からの高さ。documentTop は文書の先頭の画面上の位置で、スクロールすると上に動く
+function visibleTop(view: EditorView): number {
+  return Math.max(0, view.scrollDOM.getBoundingClientRect().top - view.documentTop)
 }
 
 // readOnly だけでは足りない。lang-markdown のキーマップ（リスト内の Enter など）は readOnly を確かめずに本文を書き換える。

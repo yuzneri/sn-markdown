@@ -13,6 +13,8 @@ export interface Layout {
   readonly editorPane: HTMLElement
   /** プレビューの HTML を入れる要素 */
   readonly preview: HTMLElement
+  /** プレビューのスクロールする要素 */
+  readonly previewScroller: HTMLElement
   setMode(mode: Mode): void
   /** ロック中は書式のボタンを無効にする */
   setLocked(locked: boolean): void
@@ -76,6 +78,7 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     },
     editorPane,
     preview,
+    previewScroller: previewPane,
     setMode(mode) {
       current = mode
       panes.dataset.mode = mode

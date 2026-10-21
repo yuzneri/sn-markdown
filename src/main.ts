@@ -9,11 +9,13 @@ import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
 import { savedMode, withMode } from './preferences'
 import { previewText, renderHtml } from './render'
+import { enableScrollSync, type ScrollSync } from './scroll-sync'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 let editor: MarkdownEditor | undefined
 let layout: Layout | undefined
+let scrollSync: ScrollSync | undefined
 // テーマの明暗。Mermaid の図のテーマに使う（ほかの色はすべて CSS 変数なので、テーマの差し替えだけで追従する）
 let appearance = watchAppearance((next) => {
   appearance = next
@@ -36,6 +38,7 @@ function renderPreview(): void {
   if (!editor || !layout || layout.mode === 'edit') return
   layout.showPreview(renderHtml(editor.text))
   renderDiagrams(layout.preview, appearance, renderPreview)
+  scrollSync?.refresh()
 }
 
 // エディタの外（プレビュー、バー、ロック中のエディタ）にファイルを落とすと、ブラウザが iframe でそのファイルを開いてしまう。
@@ -82,6 +85,13 @@ const bridge = connectNote((update) => {
     onError(message) {
       layout?.showMessage(message)
     },
+  })
+  scrollSync = enableScrollSync({
+    editor,
+    editorPane: layout.editorPane,
+    previewScroller: layout.previewScroller,
+    preview: layout.preview,
+    enabled: () => layout?.mode === 'split',
   })
   renderPreview()
 })
