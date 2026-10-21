@@ -14,6 +14,7 @@ import { imageInsertion } from './image-insert'
 import { pasteUrlAsLink } from './paste-link'
 import { isInTable } from './table'
 import { tableKeymap } from './table-commands'
+import { toggleTask } from './task'
 import { editorTheme } from './theme'
 
 export interface MarkdownEditor {
@@ -33,6 +34,8 @@ export interface MarkdownEditor {
   run(command: Command): void
   /** 検索・置換のパネルを開く（開いていれば閉じる） */
   toggleSearch(): void
+  /** line 行目（0 始まり）のタスクのチェックを切り替える。行にタスクがないとき、ロック中は false */
+  toggleTask(line: number): boolean
 }
 
 export interface EditorHandlers {
@@ -116,6 +119,12 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
     run(command) {
       command(view)
       view.focus()
+    },
+    toggleTask(line) {
+      const spec = toggleTask(view.state, line)
+      if (!spec) return false
+      view.dispatch(spec)
+      return true
     },
     toggleSearch() {
       // 開くと検索の欄にフォーカスが移るので、run と違ってエディタにはフォーカスを戻さない

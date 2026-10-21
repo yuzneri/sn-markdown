@@ -199,3 +199,8 @@
 .preview .task-list-item-checkbox {
   margin: 0 0.4em 0 -1.3em;
 }
+
+/* 押すと、元の行のチェックを切り替える（task.ts） */
+.preview .task-list-item-checkbox:not(:disabled) {
+  cursor: pointer;
+}

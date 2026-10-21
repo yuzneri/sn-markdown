@@ -86,6 +86,11 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     searchButton.disabled = current === 'preview'
   }
 
+  // ロック中は、プレビューのタスクのチェックボックスも押せないようにする（押しても本文を書き換えないので、見た目で示す）
+  const updateTaskBoxes = () => {
+    for (const box of preview.querySelectorAll<HTMLInputElement>('.task-list-item-checkbox')) box.disabled = locked
+  }
+
   const layout: Layout = {
     get mode() {
       return current
@@ -102,12 +107,14 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     setLocked(value) {
       locked = value
       updateFormatBar()
+      updateTaskBoxes()
     },
     setInTable(inTable) {
       formatBar.setInTable(inTable)
     },
     showPreview(html) {
       preview.innerHTML = html
+      updateTaskBoxes()
     },
     showMessage(text) {
       clearTimeout(messageTimer)

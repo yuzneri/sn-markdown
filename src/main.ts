@@ -10,6 +10,7 @@ import { createLayout, type Layout } from './layout'
 import { savedMode, withMode } from './preferences'
 import { previewText, renderHtml } from './render'
 import { enableScrollSync, type ScrollSync } from './scroll-sync'
+import { enableTaskToggle } from './task'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
@@ -79,6 +80,7 @@ const bridge = connectNote((update) => {
   })
   layout.setLocked(update.locked)
   enableDiagramViewer(layout.preview)
+  enableTaskToggle(layout.preview, (line) => editor?.toggleTask(line) ?? false)
   onLanguageLoaded(renderPreview)
   editor = createEditor(layout.editorPane, update, {
     onChange(text) {

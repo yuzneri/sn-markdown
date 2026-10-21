@@ -24,10 +24,11 @@ describe('renderHtml', () => {
     const html = parse('| a | b |\n|---|---|\n| 1 | 2 |\n\n~~del~~\n\n- [x] done\n- [ ] todo\n\nline1\nline2')
     expect(html.querySelectorAll('td')).toHaveLength(2)
     expect(html.querySelector('s')?.textContent).toBe('del')
+    // チェックボックスは押せる。押したときに元の行を探せるよう、項目（li）に行番号が付く（task.ts）
     const boxes = [...html.querySelectorAll<HTMLInputElement>('input[type=checkbox]')]
-    expect(boxes.map((box) => [box.checked, box.disabled])).toEqual([
-      [true, true],
-      [false, true],
+    expect(boxes.map((box) => [box.checked, box.disabled, box.closest('li')?.dataset.line])).toEqual([
+      [true, false, '6'],
+      [false, false, '7'],
     ])
     expect(html.querySelector('p:last-child br')).not.toBeNull()
   })

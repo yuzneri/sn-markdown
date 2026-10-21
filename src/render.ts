@@ -9,7 +9,8 @@ const md = new MarkdownIt({
   linkify: true,
   breaks: true,
   highlight: (code: string, lang: string): string => highlightToHtml(code, lang, md.utils.escapeHtml),
-}).use(tasklist, { label: false })
+  // チェックボックスは押せるようにする（押すと元の行を書き換える。task.ts）
+}).use(tasklist, { label: false, disabled: false })
 
 // スクロール同期でエディタの行とプレビューの要素を対応させるため、ブロック要素に元の行番号（0 始まり）を付ける
 md.core.ruler.push('data_line', (state) => {
