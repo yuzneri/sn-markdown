@@ -10,6 +10,7 @@ import { closeCodeFence } from './code-fence'
 import { completeCodeLanguage } from './code-language'
 import { formatKeymap } from './commands'
 import { collapseDataUrls } from './data-url'
+import { pasteHtmlAsMarkdown } from './html-paste'
 import { imageInsertion } from './image-insert'
 import { pasteUrlAsLink } from './paste-link'
 import { isInTable } from './table'
@@ -74,6 +75,8 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         // URL を選択範囲に貼るとリンクにする処理は、太字の中などでも効くように自前のもの（pasteUrlAsLink）を使う
         markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false, pasteURLAsLink: false }),
         pasteUrlAsLink,
+        // Web ページなどからの書式のある貼り付けを Markdown にする。URL を選択範囲に貼る処理（上）が先に効く
+        pasteHtmlAsMarkdown,
         // 最初から候補を選んでおくと、言語名を打ち終えて Enter を押したときに、改行の代わりに候補が入る。
         // 選ぶのは、矢印キーで動かしたときかクリック（タップ）したときだけにする
         autocompletion({ override: [completeCodeLanguage], selectOnOpen: false, icons: false }),
