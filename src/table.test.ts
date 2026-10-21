@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
+import { dataUrlLabel } from './data-url'
 import { alignOf, displayWidth, formatTable, locate, splitRow, tableAt, type TableLine } from './table'
 
 const state = (doc: string) => EditorState.create({ doc, extensions: markdown({ base: markdownLanguage }) })
@@ -57,6 +58,14 @@ describe('formatTable', () => {
   it('行頭の記号は行ごとに残す', () => {
     const { text } = formatTable([line('- ', 'a'), line('  ', '-'), line('  ', 'b')])
     expect(text).toBe(['- | a   |', '  | --- |', '  | b   |'].join('\n'))
+  })
+
+  it('埋め込んだ画像（data: URL）は、エディタに出す短い表示の長さで数える（ほかの行を URL の長さまで空白で埋めない）', () => {
+    const image = `![photo](data:image/png;base64,${'A'.repeat(100000)})`
+    const { text } = formatTable([line('', 'Image', 'Note'), line('', '---', '---'), line('', image, 'a'), line('', '', 'b')])
+    expect(text.length).toBeLessThan(image.length + 200)
+    const shown = `![photo](${dataUrlLabel('image/png', 100000)})`
+    expect(text.split('\n')[0]).toBe(`| ${'Image'.padEnd(shown.length)} | Note |`)
   })
 
   it('セルの中身の位置を返す', () => {

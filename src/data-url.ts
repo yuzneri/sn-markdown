@@ -33,6 +33,11 @@ class DataUrlWidget extends WidgetType {
 
 const DATA_URL = /data:(image\/[a-z0-9.+-]+);base64,([A-Za-z0-9+/=]+)/g
 
+/** text の中の data: URL を、エディタに出す短い表示に置き換えたもの（表の列の幅を、見た目の長さで数えるため） */
+export function labelDataUrls(text: string): string {
+  return text.replace(DATA_URL, (_, type: string, base64: string) => dataUrlLabel(type, base64.length))
+}
+
 /** from から to までの行（を含む行の全体）にある data: URL の置き換えの装飾 */
 function scan(doc: Text, from: number, to: number): Range<Decoration>[] {
   const start = doc.lineAt(from).from

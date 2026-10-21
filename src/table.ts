@@ -1,5 +1,6 @@
 import { ensureSyntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
+import { labelDataUrls } from './data-url'
 
 export type Align = 'none' | 'left' | 'center' | 'right'
 
@@ -144,8 +145,11 @@ export interface FormattedTable {
 export function formatTable(lines: TableLine[]): FormattedTable {
   const columns = Math.max(1, ...lines.map((line) => line.cells.length))
   const aligns = Array.from({ length: columns }, (_, column) => alignOf(lines[1]?.cells[column] ?? ''))
+  // 埋め込んだ画像の data: URL は、エディタでは短い表示に折りたたまれる（data-url.ts）。URL の長さで数えると、
+  // ほかの行が数十万文字の空白で埋まってしまうので、短い表示の長さで数える
+  const width = (text: string) => displayWidth(labelDataUrls(text))
   const widths = aligns.map((_, column) =>
-    Math.max(3, ...lines.filter((_, index) => index !== 1).map((line) => displayWidth(line.cells[column] ?? ''))),
+    Math.max(3, ...lines.filter((_, index) => index !== 1).map((line) => width(line.cells[column] ?? ''))),
   )
   let text = ''
   const cells: { from: number; to: number }[][] = []
@@ -153,9 +157,9 @@ export function formatTable(lines: TableLine[]): FormattedTable {
     if (index > 0) text += '\n'
     text += `${line.prefix}|`
     const row: { from: number; to: number }[] = []
-    widths.forEach((width, column) => {
-      const content = index === 1 ? delimiterCell(aligns[column], width) : (line.cells[column] ?? '')
-      const space = width - displayWidth(content)
+    widths.forEach((columnWidth, column) => {
+      const content = index === 1 ? delimiterCell(aligns[column], columnWidth) : (line.cells[column] ?? '')
+      const space = columnWidth - width(content)
       const before = aligns[column] === 'right' ? space : aligns[column] === 'center' ? Math.floor(space / 2) : 0
       text += ' ' + ' '.repeat(before)
       row.push({ from: text.length, to: text.length + content.length })
