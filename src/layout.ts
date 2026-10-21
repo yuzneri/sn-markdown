@@ -22,7 +22,7 @@ export interface Layout {
   setMode(mode: Mode): void
   /** ロック中は書式のボタンを無効にする */
   setLocked(locked: boolean): void
-  /** カーソルが表の中にあるときは、書式のボタンの右の組を、表の行・列の操作に替える */
+  /** カーソルが表の中なら表の行・列の操作に、数式の中なら数式の入力補助に、書式のボタンの右の組を替える */
   setContext(context: CursorContext): void
   /** サニタイズ済みの HTML を表示する */
   showPreview(html: string): void

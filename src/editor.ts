@@ -12,6 +12,7 @@ import { formatKeymap } from './commands'
 import { collapseDataUrls } from './data-url'
 import { pasteHtmlAsMarkdown } from './html-paste'
 import { imageInsertion } from './image-insert'
+import { inMath } from './math-context'
 import { pasteUrlAsLink } from './paste-link'
 import { isInTable } from './table'
 import { tableKeymap } from './table-commands'
@@ -44,11 +45,13 @@ export interface MarkdownEditor {
   toggleTask(line: number): boolean
 }
 
-/** カーソルのある場所の種類。書式バーは、表の中なら表の組、それ以外ならブロックの組を出す */
-export type CursorContext = 'table' | null
+/** カーソルのある場所の種類。書式バーは、数式の中なら数式の組、表の中なら表の組、それ以外ならブロックの組を出す */
+export type CursorContext = 'table' | 'math' | null
 
+// 表のセルの中の数式では、数式の組を出す（式を書いている間は、式のボタンのほうが要る）
 function cursorContext(state: EditorState): CursorContext {
-  return isInTable(state, state.selection.main.head) ? 'table' : null
+  const head = state.selection.main.head
+  return inMath(state, head) ? 'math' : isInTable(state, head) ? 'table' : null
 }
 
 export interface EditorHandlers {

@@ -51,6 +51,18 @@ describe('onContextChange', () => {
     expect(changes).toEqual(['table', null])
   })
 
+  it('数式の中では math を知らせる。表のセルの中の数式でも math にする', () => {
+    const changes: CursorContext[] = []
+    const doc = 'Euler $e^x$ here\n\n| a | $y$ |\n|---|---|\n\n$$\nz\n$$'
+    const { view } = create(doc, (context) => changes.push(context))
+    view.dispatch({ selection: { anchor: doc.indexOf('e^x') + 1 } })
+    view.dispatch({ selection: { anchor: doc.indexOf('| a') + 2 } })
+    view.dispatch({ selection: { anchor: doc.indexOf('$y$') + 1 } })
+    view.dispatch({ selection: { anchor: doc.indexOf('\nz\n') + 1 } })
+    view.dispatch({ selection: { anchor: 0 } })
+    expect(changes).toEqual(['math', 'table', 'math', null])
+  })
+
   it('最初から表の中にカーソルがあれば、作ったときに知らせる', () => {
     const changes: CursorContext[] = []
     create('| a |\n|---|', (context) => changes.push(context))

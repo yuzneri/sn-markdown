@@ -1,8 +1,11 @@
 import type { Command } from '@codemirror/view'
 import {
   Bold,
+  Braces,
+  Brackets,
   Code,
   createElement,
+  Divide,
   Heading,
   Image,
   Italic,
@@ -11,17 +14,23 @@ import {
   ListOrdered,
   ListTodo,
   Minus,
+  Radical,
+  Sigma,
   SquareCode,
+  SquareSigma,
   Strikethrough,
+  Subscript,
+  Superscript,
   Table,
   TextAlignCenter,
   TextAlignEnd,
   TextAlignStart,
   TextQuote,
+  Type,
   WandSparkles,
   type IconNode,
 } from 'lucide'
-import { cycleHeading, insertBlock, insertCodeBlock, insertLink, toggleInline, toggleLinePrefix } from './commands'
+import { cycleHeading, insertBlock, insertCodeBlock, insertLink, insertMath, insertTex, toggleInline, toggleLinePrefix } from './commands'
 import { element } from './dom'
 import type { CursorContext } from './editor'
 import { addColumnRight, addRowBelow, alignColumn, deleteColumn, deleteRow, formatCurrentTable } from './table-commands'
@@ -49,6 +58,8 @@ const ROW: IconNode = [['rect', { x: '2', y: '7', width: '20', height: '10', rx:
 const COLUMN: IconNode = [['rect', { x: '7', y: '2', width: '10', height: '20', rx: '2' }]]
 const PLUS: IconNode = [['path', { d: 'M12 9v6' }], ['path', { d: 'M9 12h6' }]]
 const CROSS: IconNode = [['path', { d: 'm9.5 9.5 5 5' }], ['path', { d: 'm14.5 9.5-5 5' }]]
+// 積分の記号（∫）。Lucide にないので、同じ線で描く
+const INTEGRAL: IconNode = [['path', { d: 'M16 3.5a2.5 2.5 0 0 0-4 1.8v13.4A2.5 2.5 0 0 1 8 20.5' }]]
 
 // 仕切りで区切った組ごとに並べる。最後の組は、カーソルが表の中にあるときだけ TABLE_GROUP と入れ替える
 const GROUPS: Action[][] = [
@@ -70,12 +81,14 @@ const GROUPS: Action[][] = [
     { icon: SquareCode, label: 'Code block', command: insertCodeBlock },
     // 入れた後に最初の列名を選んで、そのまま書き換えられるようにする
     { icon: Table, label: 'Table', command: insertBlock(TABLE, selecting(TABLE, 'Column')) },
+    { icon: SquareSigma, label: 'Math', command: insertMath },
     { icon: Minus, label: 'Horizontal rule', command: insertBlock('---') },
     { icon: Image, label: 'Image' },
   ],
 ]
 
-// 表の中で、最後の組（ブロックを入れるボタン）の代わりに出す。表の中にブロックは入れられないので、入れ替えてもなくなるものはない
+// 表の中で、最後の組（ブロックを入れるボタン）の代わりに出す。表の中にブロックは入れられないので、入れ替えてもなくなるものはない。
+// 数式の組（MATH_GROUP）も同じ
 const TABLE_GROUP: Action[] = [
   { icon: [...ROW, ...PLUS], label: 'Add row below', command: addRowBelow },
   { icon: [...ROW, ...CROSS], label: 'Delete row', command: deleteRow },
@@ -87,6 +100,20 @@ const TABLE_GROUP: Action[] = [
   { icon: WandSparkles, label: 'Format table', command: formatCurrentTable },
 ]
 
+// 数式の中で、最後の組の代わりに出す。ひな形の ¦ に選択範囲が入り、選択がなければそこにカーソルを置く（commands.ts の insertTex）
+const MATH_GROUP: Action[] = [
+  { icon: Divide, label: 'Fraction', command: insertTex('\\frac{¦}{‸}') },
+  { icon: Radical, label: 'Square root', command: insertTex('\\sqrt{¦}') },
+  { icon: Superscript, label: 'Superscript', command: insertTex('^{¦}') },
+  { icon: Subscript, label: 'Subscript', command: insertTex('_{¦}') },
+  // 数式の中の日本語などの文字
+  { icon: Type, label: 'Text', command: insertTex('\\text{¦}') },
+  { icon: Sigma, label: 'Sum', command: insertTex('\\sum_{¦}^{‸}') },
+  { icon: INTEGRAL, label: 'Integral', command: insertTex('\\int_{¦}^{‸}') },
+  { icon: Brackets, label: 'Matrix', command: insertTex('\\begin{pmatrix} ¦ & ‸ \\\\  &  \\end{pmatrix}') },
+  { icon: Braces, label: 'Cases', command: insertTex('\\begin{cases} ¦ & ‸ \\\\  &  \\end{cases}') },
+]
+
 export interface FormatBarHandlers {
   onCommand(command: Command): void
   onImageFiles(files: File[]): void
@@ -96,7 +123,7 @@ export interface FormatBar {
   readonly element: HTMLElement
   /** プレビューのモードとロック中は、押しても意味がないので無効にする */
   setEnabled(enabled: boolean): void
-  /** カーソルが表の中にあるときは、最後の組を表の行・列の操作に替える */
+  /** カーソルが表の中にあるときは表の行・列の操作に、数式の中にあるときは数式の入力補助に、最後の組を替える */
   setContext(context: CursorContext): void
 }
 
@@ -137,8 +164,9 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
   })
   const blockButtons = groups[groups.length - 1]
   const tableButtons = TABLE_GROUP.map(createButton)
-  for (const button of tableButtons) button.hidden = true
-  const buttons = [...groups.flat(), ...tableButtons]
+  const mathButtons = MATH_GROUP.map(createButton)
+  for (const button of [...tableButtons, ...mathButtons]) button.hidden = true
+  const buttons = [...groups.flat(), ...tableButtons, ...mathButtons]
   bar.append(imageInput)
 
   return {
@@ -149,6 +177,7 @@ export function createFormatBar(handlers: FormatBarHandlers): FormatBar {
     setContext(context) {
       for (const button of blockButtons) button.hidden = context !== null
       for (const button of tableButtons) button.hidden = context !== 'table'
+      for (const button of mathButtons) button.hidden = context !== 'math'
     },
   }
 }
