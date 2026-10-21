@@ -36,6 +36,65 @@ body {
   cursor: pointer;
 }
 
+.tool-button[aria-pressed='true'] {
+  background: var(--sn-stylekit-contrast-background-color);
+  color: var(--sn-stylekit-info-color);
+}
+
+.format-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.5rem;
+}
+
+/* 書式バー（format-bar.ts）。狭い画面では横にスクロールする */
+.format-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.125rem;
+  padding: 0.25rem 0.5rem;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--sn-stylekit-border-color);
+  scrollbar-width: none;
+}
+
+.format-bar[hidden] {
+  display: none;
+}
+
+.format-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sn-stylekit-foreground-color);
+  cursor: pointer;
+}
+
+.format-button:hover:not(:disabled) {
+  background: var(--sn-stylekit-contrast-background-color);
+}
+
+.format-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.format-separator {
+  flex-shrink: 0;
+  width: 1px;
+  height: 1.25rem;
+  margin: 0 0.25rem;
+  background: var(--sn-stylekit-border-color);
+}
+
 .toolbar-message {
   min-width: 0;
   overflow: hidden;

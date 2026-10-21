@@ -7,7 +7,7 @@ import { renderDiagrams } from './diagram'
 import { createEditor, type MarkdownEditor } from './editor'
 import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
-import { savedMode, withMode } from './preferences'
+import { savedFormatBar, savedMode, withFormatBar, withMode } from './preferences'
 import { previewText, renderHtml } from './render'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
 
@@ -54,18 +54,28 @@ window.addEventListener('drop', (event) => {
 const bridge = connectNote((update) => {
   if (editor) {
     editor.update(update)
+    layout?.setLocked(update.locked)
     if (update.text !== undefined) schedulePreview()
     return
   }
-  layout = createLayout(app, savedMode(bridge.readPreferences(), bridge.environment), {
+  const environment = bridge.environment
+  const preferences = bridge.readPreferences()
+  layout = createLayout(app, { mode: savedMode(preferences, environment), formatBar: savedFormatBar(preferences, environment) }, {
     onModeChange(mode) {
-      bridge.writePreferences(withMode(bridge.readPreferences(), bridge.environment, mode))
+      bridge.writePreferences(withMode(bridge.readPreferences(), environment, mode))
       renderPreview()
+    },
+    onFormatBarToggle(visible) {
+      bridge.writePreferences(withFormatBar(bridge.readPreferences(), environment, visible))
+    },
+    onCommand(command) {
+      editor?.run(command)
     },
     onImageFiles(files) {
       editor?.insertImages(files)
     },
   })
+  layout.setLocked(update.locked)
   enableDiagramViewer(layout.preview)
   onLanguageLoaded(renderPreview)
   editor = createEditor(layout.editorPane, update, {

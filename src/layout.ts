@@ -1,3 +1,7 @@
+import type { StateCommand } from '@codemirror/state'
+import { createElement, Type } from 'lucide'
+import { element } from './dom'
+import { createFormatBar } from './format-bar'
 import { MODES, type Mode } from './preferences'
 
 const LABELS: Record<Mode, string> = { edit: 'Edit', split: 'Split', preview: 'Preview' }
@@ -11,6 +15,8 @@ export interface Layout {
   /** プレビューの HTML を入れる要素 */
   readonly preview: HTMLElement
   setMode(mode: Mode): void
+  /** ロック中は書式のボタンを無効にする */
+  setLocked(locked: boolean): void
   /** サニタイズ済みの HTML を表示する */
   showPreview(html: string): void
   /** バーに短いメッセージ（エラーなど）をしばらく出す */
@@ -19,29 +25,26 @@ export interface Layout {
 
 export interface LayoutHandlers {
   onModeChange(mode: Mode): void
+  onFormatBarToggle(visible: boolean): void
+  /** 書式のボタンが押された */
+  onCommand(command: StateCommand): void
   /** Image ボタンで画像が選ばれた */
   onImageFiles(files: File[]): void
 }
 
-export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutHandlers): Layout {
+export function createLayout(root: HTMLElement, initial: { mode: Mode; formatBar: boolean }, handlers: LayoutHandlers): Layout {
   const toolbar = element('div', 'toolbar')
 
-  const imageButton = element('button', 'tool-button')
-  imageButton.type = 'button'
-  imageButton.textContent = 'Image'
-  imageButton.title = 'Insert image'
-  const imageInput = element('input', 'image-input')
-  imageInput.type = 'file'
-  // 埋め込めるのはこの 4 つ（image.ts）。iOS は、HEIC の写真をこの指定に合わせて JPEG にして渡す
-  imageInput.accept = 'image/png,image/jpeg,image/gif,image/webp'
-  imageInput.multiple = true
-  imageInput.hidden = true
-  imageButton.addEventListener('click', () => imageInput.click())
-  imageInput.addEventListener('change', () => {
-    handlers.onImageFiles([...(imageInput.files ?? [])])
-    // 同じファイルをもう一度選んでも change が起きるよう空にする
-    imageInput.value = ''
+  const formatToggle = element('button', 'tool-button format-toggle')
+  formatToggle.type = 'button'
+  formatToggle.title = 'Formatting toolbar'
+  formatToggle.setAttribute('aria-label', 'Formatting toolbar')
+  formatToggle.append(createElement(Type, { width: 16, height: 16, 'aria-hidden': 'true' }))
+  formatToggle.addEventListener('click', () => {
+    setFormatBarVisible(!formatBarVisible)
+    handlers.onFormatBarToggle(formatBarVisible)
   })
+
   const message = element('span', 'toolbar-message')
   message.setAttribute('role', 'status')
   let messageTimer: ReturnType<typeof setTimeout> | undefined
@@ -61,17 +64,28 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     return button
   })
   modes.append(...buttons)
-  toolbar.append(imageButton, imageInput, message, modes)
+  toolbar.append(formatToggle, message, modes)
 
+  const formatBar = createFormatBar(handlers)
   const panes = element('div', 'panes')
   const editorPane = element('div', 'pane editor-pane')
   const previewPane = element('div', 'pane preview-pane')
   const preview = element('div', 'preview')
   previewPane.append(preview)
   panes.append(editorPane, previewPane)
-  root.append(toolbar, panes)
+  root.append(toolbar, formatBar.element, panes)
 
-  let current = initial
+  let formatBarVisible = initial.formatBar
+  const setFormatBarVisible = (visible: boolean) => {
+    formatBarVisible = visible
+    formatBar.element.hidden = !visible
+    formatToggle.setAttribute('aria-pressed', String(visible))
+  }
+  let current = initial.mode
+  let locked = false
+  // プレビューのモードではエディタが見えず、ロック中は書き換えられないので、書式のボタンは押せないようにする
+  const updateFormatBar = () => formatBar.setEnabled(current !== 'preview' && !locked)
+
   const layout: Layout = {
     get mode() {
       return current
@@ -82,6 +96,11 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
       current = mode
       panes.dataset.mode = mode
       buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(MODES[i] === mode)))
+      updateFormatBar()
+    },
+    setLocked(value) {
+      locked = value
+      updateFormatBar()
     },
     showPreview(html) {
       preview.innerHTML = html
@@ -92,12 +111,7 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
       messageTimer = setTimeout(() => (message.textContent = ''), MESSAGE_DURATION)
     },
   }
-  layout.setMode(initial)
+  setFormatBarVisible(initial.formatBar)
+  layout.setMode(initial.mode)
   return layout
-}
-
-export function element<K extends keyof HTMLElementTagNameMap>(tag: K, className: string): HTMLElementTagNameMap[K] {
-  const node = document.createElement(tag)
-  node.className = className
-  return node
 }

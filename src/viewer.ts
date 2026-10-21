@@ -1,4 +1,4 @@
-import { element } from './layout'
+import { element } from './dom'
 import { centered, fitView, panBy, zoomAt, type Point, type Size, type View } from './zoom'
 
 // ボタンとキーで 1 回に変える倍率
