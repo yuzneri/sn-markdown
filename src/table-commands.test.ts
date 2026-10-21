@@ -1,7 +1,17 @@
 import { describe, expect, it } from 'vitest'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState, type StateCommand } from '@codemirror/state'
-import { nextCell, nextRow, previousCell } from './table-commands'
+import {
+  addColumnRight,
+  addRowBelow,
+  alignColumn,
+  deleteColumn,
+  deleteRow,
+  formatCurrentTable,
+  nextCell,
+  nextRow,
+  previousCell,
+} from './table-commands'
 
 /** `‸` をカーソルとして書いた文書にコマンドを実行し、同じ書き方で結果を返す（表の | と区別するため、| は使わない） */
 function run(command: StateCommand, doc: string, options: { readOnly?: boolean } = {}): string | false {
@@ -80,5 +90,50 @@ describe('nextRow（Enter）', () => {
 
   it('表の外では何もしない', () => {
     expect(run(nextRow, 'text‸')).toBe(false)
+  })
+})
+
+describe('行と列の操作（書式バーのボタン）', () => {
+  const base = table('| a | b |', '|---|---|', '| 1 | 2‸ |', '| 3 | 4 |')
+
+  it('addRowBelow: カーソルの行の下に行を足し、同じ列に移る。ヘッダーでは本文の最初の行にする', () => {
+    expect(run(addRowBelow, base)).toBe(table('| a   | b   |', '| --- | --- |', '| 1   | 2   |', '|     | ‸    |', '| 3   | 4   |'))
+    expect(run(addRowBelow, table('| a‸ |', '|---|', '| 1 |'))).toBe(table('| a   |', '| --- |', '| ‸    |', '| 1   |'))
+  })
+
+  it('deleteRow: カーソルの行を消し、次の行（最後の行なら前の行）に移る。ヘッダーと区切り行は消さない', () => {
+    expect(run(deleteRow, base)).toBe(table('| a   | b   |', '| --- | --- |', '| 3   | 4‸   |'))
+    expect(run(deleteRow, table('| a | b |', '|---|---|', '| 1 | 2 |', '| 3 | 4‸ |'))).toBe(table('| a   | b   |', '| --- | --- |', '| 1   | 2‸   |'))
+    expect(run(deleteRow, table('| a | b |', '|---|---|', '| 1 | 2‸ |'))).toBe(table('| a   | b‸   |', '| --- | --- |'))
+    expect(run(deleteRow, table('| a‸ |', '|---|', '| 1 |'))).toBe(false)
+  })
+
+  it('addColumnRight: カーソルの列の右に列を足し、その列に移る。セルの足りない行も列がずれない', () => {
+    expect(run(addColumnRight, table('| a‸ | b |', '|---|--:|', '| 1 |'))).toBe(
+      table('| a   | ‸    |   b |', '| --- | --- | --: |', '| 1   |     |     |'),
+    )
+  })
+
+  it('deleteColumn: カーソルの列を消す。列が 1 つなら消さない', () => {
+    expect(run(deleteColumn, table('| a | b‸ | c |', '|---|---|--:|'))).toBe(table('| a   |   c‸ |', '| --- | --: |'))
+    expect(run(deleteColumn, table('| a | b‸ |', '|---|---|'))).toBe(table('| a‸   |', '| --- |'))
+    expect(run(deleteColumn, table('| a‸ |', '|---|'))).toBe(false)
+  })
+
+  it('alignColumn: カーソルの列の配置を変え、カーソルは同じ位置に残す', () => {
+    expect(run(alignColumn('right'), table('| a | bc‸ |', '|---|---|', '| 1 | 2 |'))).toBe(
+      table('| a   |  bc‸ |', '| --- | --: |', '| 1   |   2 |'),
+    )
+    expect(run(alignColumn('center'), table('| a‸ |', '|---|'))).toBe(table('|  a‸  |', '| :-: |'))
+  })
+
+  it('formatCurrentTable: 整形し、カーソルは同じセルの同じ位置に残す', () => {
+    expect(run(formatCurrentTable, table('|a‸b|c|', '|-|-|'))).toBe(table('| a‸b  | c   |', '| --- | --- |'))
+  })
+
+  it('表の外では何もしない', () => {
+    for (const command of [addRowBelow, deleteRow, addColumnRight, deleteColumn, alignColumn('left'), formatCurrentTable]) {
+      expect(run(command, 'text‸')).toBe(false)
+    }
   })
 })
