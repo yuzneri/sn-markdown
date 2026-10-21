@@ -171,6 +171,49 @@ export const insertCodeBlock: Command = (view) => {
   return true
 }
 
+/**
+ * 数式のひな形を入れる（数式の組のボタン）。¦ に選択範囲を入れ、選択がなければそこにカーソルを置く。
+ * 選択を入れたときは、‸ があればそこに、なければ入れた後ろにカーソルを置く（‸ は ¦ より後ろに書く）
+ */
+export function insertTex(template: string): StateCommand {
+  return ({ state, dispatch }) => {
+    if (state.readOnly) return false
+    const slot = template.indexOf('¦')
+    const next = template.indexOf('‸')
+    dispatch(
+      state.update(
+        state.changeByRange((range) => {
+          const selected = state.sliceDoc(range.from, range.to)
+          const insert = template.replace('¦', selected).replace('‸', '')
+          // ¦ の 1 文字が選択範囲に置き換わるので、‸ の位置は選択範囲の長さ - 1 だけずれる
+          const cursor = !selected ? slot : next >= 0 ? next - 1 + selected.length : insert.length
+          return { changes: { from: range.from, to: range.to, insert }, range: EditorSelection.cursor(range.from + cursor) }
+        }),
+        { scrollIntoView: true, userEvent: 'input' },
+      ),
+    )
+    return true
+  }
+}
+
+/**
+ * 数式を入れる（数式の外の「数式」ボタン）。空の行ではブロックの $$、行の途中では $…$ を入れる。
+ * 1 行の選択は $ で、複数の行の選択は $$ のブロックで囲む。カーソルは数式の中に置く（すぐに数式の組のボタンを使えるように）
+ */
+export const insertMath: StateCommand = (target) => {
+  const { state } = target
+  const range = state.selection.main
+  const first = state.doc.lineAt(range.from)
+  const last = state.doc.lineAt(range.to)
+  if (range.empty && !first.text.trim()) return insertBlock('$$\n\n$$', { from: 3, to: 3 })(target)
+  if (state.readOnly) return false
+  if (first.number !== last.number) {
+    const body = state.sliceDoc(first.from, last.to)
+    return insertBlockAt(target, first.from, last.to, `$$\n${body}\n$$`, 3 + body.length)
+  }
+  return insertTex('$¦‸$')(target)
+}
+
 /** from から to をブロックで置き換え、カーソルをブロックの中の cursor の位置に置く */
 function insertBlockAt(
   { state, dispatch }: Parameters<StateCommand>[0],

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
-import { cycleHeading, insertBlock, insertLink, toggleInline, toggleLinePrefix, wrapCodeBlock } from './commands'
+import { cycleHeading, insertBlock, insertLink, insertMath, insertTex, toggleInline, toggleLinePrefix, wrapCodeBlock } from './commands'
 
 /** `|` をカーソル、`«` `»` を選択範囲として書いた文書にコマンドを実行し、同じ書き方で結果を返す */
 function run(command: StateCommand, doc: string, options: { readOnly?: boolean } = {}): string {
@@ -137,5 +137,43 @@ describe('wrapCodeBlock', () => {
   it('選択がなければ、中の行のない空のコードブロックを入れる', () => {
     expect(run(wrapCodeBlock, '|')).toBe('```|\n```')
     expect(run(wrapCodeBlock, 'a\n|')).toBe('a\n\n```|\n```')
+  })
+})
+
+describe('insertTex', () => {
+  const frac = insertTex('\\frac{¦}{‸}')
+
+  it('選択がなければ、最初の空欄（¦）にカーソルを置く', () => {
+    expect(run(frac, '$x + |$')).toBe('$x + \\frac{|}{}$')
+  })
+
+  it('選択範囲を ¦ に入れ、‸ にカーソルを置く', () => {
+    expect(run(frac, '$«a + b»$')).toBe('$\\frac{a + b}{|}$')
+  })
+
+  it('‸ がなければ、選択範囲を入れた後ろにカーソルを置く', () => {
+    expect(run(insertTex('\\sqrt{¦}'), '$«x»$')).toBe('$\\sqrt{x}|$')
+  })
+
+  it('ロック中は何もしない', () => {
+    expect(run(frac, '$|$', { readOnly: true })).toBe('$|$')
+  })
+})
+
+describe('insertMath', () => {
+  it('空の行では、前後に空行を確保して $$ のブロックを入れ、中にカーソルを置く', () => {
+    expect(run(insertMath, 'text\n|')).toBe('text\n\n$$\n|\n$$')
+  })
+
+  it('行の途中では $…$ を入れ、間にカーソルを置く', () => {
+    expect(run(insertMath, 'Euler |')).toBe('Euler $|$')
+  })
+
+  it('1 行の選択は $ で囲み、カーソルは閉じの前に置く', () => {
+    expect(run(insertMath, 'Euler «e^x» here')).toBe('Euler $e^x|$ here')
+  })
+
+  it('複数の行の選択は $$ のブロックで囲む', () => {
+    expect(run(insertMath, 'text\n«a = 1\nb = 2»\nmore')).toBe('text\n\n$$\na = 1\nb = 2|\n$$\n\nmore')
   })
 })
