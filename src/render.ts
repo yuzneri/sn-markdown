@@ -18,6 +18,19 @@ md.core.ruler.push('data_line', (state) => {
   }
 })
 
+// Mermaid のコードブロックは、図の描画（diagram.ts）が後から図に置き換える目印にする。
+// 中身はソースのまま入れておき、図を読み込む前や図にできないときにも読めるようにする
+const renderFence = md.renderer.rules.fence!
+md.renderer.rules.fence = (tokens, idx, options, env, self) => {
+  const token = tokens[idx]
+  if (!isMermaid(token)) return renderFence(tokens, idx, options, env, self)
+  return `<div class="mermaid-block"${self.renderAttrs(token)}><pre><code>${md.utils.escapeHtml(token.content)}</code></pre></div>\n`
+}
+
+function isMermaid(token: Token): boolean {
+  return token.type === 'fence' && token.info.trim().split(/\s+/)[0].toLowerCase() === 'mermaid'
+}
+
 // プレビューのリンクは新しいタブで開く（index.html の <base target="_blank">）。opener を渡すと、開いた先のページが
 // window.opener 経由で偽の component-registered を送って sessionKey を差し替え、以後の保存を親アプリに拒否させられる
 DOMPurify.addHook('afterSanitizeAttributes', (node) => {
@@ -41,7 +54,8 @@ export function previewText(markdown: string): string {
   const parts: string[] = []
   for (const token of md.parse(markdown.slice(0, PREVIEW_SOURCE_LENGTH), {})) {
     if (token.type === 'inline') parts.push(inlineText(token.children ?? []))
-    else if (token.type === 'fence' || token.type === 'code_block') parts.push(token.content)
+    // Mermaid のソースは一覧では図にならず、記号の羅列になるだけなので除く
+    else if ((token.type === 'fence' && !isMermaid(token)) || token.type === 'code_block') parts.push(token.content)
   }
   // 絵文字などのサロゲートペアを途中で切らないよう、コードポイント単位で数える
   const chars = Array.from(parts.join(' ').replace(/\s+/g, ' ').trim())

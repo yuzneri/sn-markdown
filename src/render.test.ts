@@ -53,6 +53,13 @@ describe('renderHtml', () => {
     expect(code?.textContent).toBe('def f():\n    return 1\n')
   })
 
+  it('Mermaid のコードブロックは、ソースを入れた目印（.mermaid-block）にする', () => {
+    const block = parse('text\n\n```Mermaid\ngraph TD\n  A --> B<br>\n```\n').querySelector<HTMLElement>('.mermaid-block')
+    expect(block?.dataset.line).toBe('2')
+    expect(block?.querySelector('pre code')?.textContent).toBe('graph TD\n  A --> B<br>\n')
+    expect(block?.querySelector('br')).toBeNull()
+  })
+
   it('<style> は除く（プラグインの画面全体に効いてしまうため）', () => {
     expect(parse('<style>body { display: none }</style>text').querySelector('style')).toBeNull()
   })
@@ -93,6 +100,10 @@ describe('previewText', () => {
     const long = '😀'.repeat(100)
     expect(previewText(long)).toBe(`${'😀'.repeat(90)}…`)
     expect(previewText('a'.repeat(90))).toBe('a'.repeat(90))
+  })
+
+  it('Mermaid のソースは除く', () => {
+    expect(previewText('# Flow\n\n```mermaid\ngraph TD\n  A --> B\n```\n\nafter')).toBe('Flow after')
   })
 
   it('空のノートは空にする', () => {
