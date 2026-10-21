@@ -38,6 +38,18 @@ function renderPreview(): void {
   renderDiagrams(layout.preview, appearance, renderPreview)
 }
 
+// エディタの外（プレビュー、バー、ロック中のエディタ）にファイルを落とすと、ブラウザが iframe でそのファイルを開いてしまう。
+// window でも受けて、エディタのカーソルの位置に入れる（エディタの上に落としたものは、エディタが先に受けている）
+const hasFiles = (event: DragEvent) => event.dataTransfer?.types.includes('Files') ?? false
+window.addEventListener('dragover', (event) => {
+  if (hasFiles(event)) event.preventDefault()
+})
+window.addEventListener('drop', (event) => {
+  if (!hasFiles(event) || event.defaultPrevented) return
+  event.preventDefault()
+  editor?.insertImages([...(event.dataTransfer?.files ?? [])])
+})
+
 // エディタは最初のノートを受け取ってから作る。受け取る前に入力されると、sn-extension-api がノートのない状態で保存しようとして例外を投げる
 const bridge = connectNote((update) => {
   if (editor) {
@@ -45,15 +57,25 @@ const bridge = connectNote((update) => {
     if (update.text !== undefined) schedulePreview()
     return
   }
-  layout = createLayout(app, savedMode(bridge.readPreferences(), bridge.environment), (mode) => {
-    bridge.writePreferences(withMode(bridge.readPreferences(), bridge.environment, mode))
-    renderPreview()
+  layout = createLayout(app, savedMode(bridge.readPreferences(), bridge.environment), {
+    onModeChange(mode) {
+      bridge.writePreferences(withMode(bridge.readPreferences(), bridge.environment, mode))
+      renderPreview()
+    },
+    onImageFiles(files) {
+      editor?.insertImages(files)
+    },
   })
   enableDiagramViewer(layout.preview)
   onLanguageLoaded(renderPreview)
-  editor = createEditor(layout.editorPane, update, (text) => {
-    bridge.save(text, previewText(text))
-    schedulePreview()
+  editor = createEditor(layout.editorPane, update, {
+    onChange(text) {
+      bridge.save(text, previewText(text))
+      schedulePreview()
+    },
+    onError(message) {
+      layout?.showMessage(message)
+    },
   })
   renderPreview()
 })

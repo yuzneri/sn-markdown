@@ -4,16 +4,27 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import type { NoteUpdate } from './bridge'
+import { imageInsertion } from './image-insert'
 import { editorTheme } from './theme'
 
 export interface MarkdownEditor {
   readonly text: string
   /** 外部（他端末など）からの本文の変更とロックの状態を反映する。本文の変更は保存も履歴への追加もしない */
   update(update: NoteUpdate): void
+  /** 画像をカーソルの位置に埋め込む */
+  insertImages(files: File[]): void
 }
 
-export function createEditor(parent: HTMLElement, initial: NoteUpdate, onChange: (text: string) => void): MarkdownEditor {
+export interface EditorHandlers {
+  /** ユーザーの編集で本文が変わった */
+  onChange(text: string): void
+  /** 画像を入れられなかったなど、ユーザーに知らせること */
+  onError(message: string): void
+}
+
+export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers: EditorHandlers): MarkdownEditor {
   const lock = new Compartment()
+  const images = imageInsertion(handlers.onError)
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -27,8 +38,9 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, onChange:
         markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false }),
         EditorView.lineWrapping,
         editorTheme,
+        images.extension,
         EditorView.updateListener.of((update) => {
-          if (update.transactions.some(isLocalEdit)) onChange(update.state.doc.toString())
+          if (update.transactions.some(isLocalEdit)) handlers.onChange(update.state.doc.toString())
         }),
       ],
     }),
@@ -43,6 +55,9 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, onChange:
         ...(text === undefined ? {} : externalUpdate(view.state, text)),
         effects: lock.reconfigure(lockExtension(locked)),
       })
+    },
+    insertImages(files) {
+      images.insert(view, files).catch((error: unknown) => handlers.onError(error instanceof Error ? error.message : String(error)))
     },
   }
 }

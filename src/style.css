@@ -24,6 +24,27 @@ body {
   border-bottom: 1px solid var(--sn-stylekit-border-color);
 }
 
+.tool-button {
+  min-height: 1.75rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--sn-stylekit-border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--sn-stylekit-neutral-color);
+  font: inherit;
+  font-size: var(--sn-stylekit-base-font-size);
+  cursor: pointer;
+}
+
+.toolbar-message {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--sn-stylekit-danger-color);
+  font-size: var(--sn-stylekit-base-font-size);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 .modes {
   display: flex;
   margin-left: auto;
