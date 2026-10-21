@@ -79,6 +79,18 @@
   }
 }
 
+/* タッチの端末では、見出しのボタンを押しやすい幅にし、その分だけプレビューの左の余白を広げる */
+@media (pointer: coarse) {
+  .preview {
+    padding-left: 1.75rem;
+  }
+
+  .heading-fold {
+    left: -1.75rem;
+    width: 1.75rem;
+  }
+}
+
 /* 畳んだ見出しの後ろは隠す。要素ごとの display の指定より先に効かせる */
 .preview > [hidden] {
   display: none !important;

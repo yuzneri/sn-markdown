@@ -47,6 +47,11 @@ const editorStyle = EditorView.theme({
   '.cm-foldGutter .cm-gutterElement': { paddingLeft: '0.5rem' },
   '.cm-foldMarker': { display: 'inline-flex', height: '100%', alignItems: 'center', opacity: '0.6', cursor: 'pointer' },
   '.cm-foldMarker:hover': { opacity: '1' },
+  // タッチの端末では、押す場所を大きくする（CodeMirror は自分のスタイルを後から足すので、style.css ではなくここに書く）
+  '@media (pointer: coarse)': {
+    '.cm-foldGutter .cm-gutterElement': { minWidth: '1.75rem', paddingLeft: '0', textAlign: 'center' },
+    '.cm-tooltip.cm-tooltip-autocomplete > ul > li': { padding: '0.5em 0.6em' },
+  },
   // 畳んだところ（…）。押すと開く
   '.cm-foldPlaceholder': {
     border: 'none',

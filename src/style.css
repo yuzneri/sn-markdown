@@ -4,6 +4,17 @@ body {
   margin: 0;
 }
 
+/* iOS が、横向きにしたときに字を勝手に大きくしないようにする */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* タッチの端末で、ボタンを続けて押したときに画面が拡大しないようにする（ダブルタップでの拡大を止める） */
+button {
+  touch-action: manipulation;
+}
+
 body {
   background-color: var(--sn-stylekit-editor-background-color);
   color: var(--sn-stylekit-editor-foreground-color);
@@ -268,5 +279,33 @@ body {
 
   .panes[data-mode='preview'] .preview-pane {
     border-top: none;
+  }
+}
+
+/* タッチの端末では、押す場所を大きくする（40px 前後）。CodeMirror の中のもの（言語名の候補、折りたたみの印）は theme.ts */
+@media (pointer: coarse) {
+  .format-button {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .mode-button {
+    min-height: 2.5rem;
+  }
+
+  .outline-item {
+    padding-block: 0.6rem;
+  }
+
+  .symbol-menu {
+    width: 21rem;
+  }
+
+  .symbol-grid {
+    grid-template-columns: repeat(auto-fill, minmax(2.5rem, 1fr));
+  }
+
+  .symbol-item {
+    height: 2.5rem;
   }
 }
