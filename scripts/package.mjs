@@ -28,7 +28,9 @@ const manifest = {
   version: pkg.version,
   description: pkg.description,
   url: new URL('index.html', base).href,
-  download_url: new URL('latest.zip', base).href,
+  // デスクトップ版は HTTP キャッシュ付きで zip を取得する（Pages は max-age=600）。バージョンごとに URL を変え、
+  // 新しい ext.json と古い zip を組み合わせて取り込む（以後そのバージョンのまま更新されない）のを防ぐ
+  download_url: new URL(`latest.zip?v=${pkg.version}`, base).href,
   latest_url: new URL('ext.json', base).href,
   note_type: 'markdown',
   file_type: 'md',
