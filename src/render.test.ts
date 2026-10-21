@@ -82,6 +82,31 @@ describe('renderHtml', () => {
   })
 })
 
+describe('数式', () => {
+  it('$…$ は行の中の数式、$$…$$ と ```math はブロックの数式の目印にする（ブロックには data-line を付ける）', () => {
+    const html = parse('Euler $e^{i\\pi}+1=0$ here.\n\n$$\na^2+b^2=c^2\n$$\n\n```math\nx = 1\n```')
+    expect(html.querySelector('p span.math')?.textContent).toBe('e^{i\\pi}+1=0')
+    expect([...html.querySelectorAll('div.math.math-display')].map((element) => [element.textContent, element.getAttribute('data-line')])).toEqual([
+      ['a^2+b^2=c^2', '2'],
+      ['x = 1', '6'],
+    ])
+  })
+
+  it('金額の $ や、空白で囲んだ $ は数式にしない', () => {
+    expect(parse('costs $5 and $10. Also $ not math $.').querySelector('.math')).toBeNull()
+  })
+
+  it('ソースはエスケープして入れる（KaTeX を読み込む前にも、そのまま読める）', () => {
+    const html = parse('$a<b><img src=x onerror=alert(1)>$')
+    expect(html.querySelector('img')).toBeNull()
+    expect(html.querySelector('.math')?.textContent).toBe('a<b><img src=x onerror=alert(1)>')
+  })
+
+  it('一覧のプレビューには、行の中の数式のソースを入れ、ブロックの数式は除く', () => {
+    expect(previewText('Euler $e^x$ here\n\n$$\nx\n$$\n\n```math\ny\n```\n\nend')).toBe('Euler e^x here end')
+  })
+})
+
 describe('headings', () => {
   it('見出しの階層、記号を除いた文字、元の行（プレビューの data-line と同じ）を返す', () => {
     const doc = '# Title\n\ntext\n\n## **Bold** and `code`\n\nSetext\n---\n\n### [Link](https://example.com) ###'

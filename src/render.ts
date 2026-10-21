@@ -1,5 +1,6 @@
 import MarkdownIt, { type Token } from 'markdown-it'
 import { tasklist } from '@mdit/plugin-tasklist'
+import { tex } from '@mdit/plugin-tex'
 import DOMPurify from 'dompurify'
 import { highlightToHtml } from './highlight'
 
@@ -10,7 +11,21 @@ const md = new MarkdownIt({
   breaks: true,
   highlight: (code: string, lang: string): string => highlightToHtml(code, lang, md.utils.escapeHtml),
   // チェックボックスは押せるようにする（押すと元の行を書き換える。task.ts）
-}).use(tasklist, { label: false, disabled: false })
+})
+  .use(tasklist, { label: false, disabled: false })
+  // $…$ と $$…$$（GitHub と同じ）。$5 と $10 のような金額は、開きの直後と閉じの直前が空白でない、閉じの直後が数字でない、の規則で数式にならない
+  .use(tex, { delimiters: 'dollars', render: (content, displayMode) => mathPlaceholder(content, displayMode) })
+
+/**
+ * 数式の目印。描画（math.ts）が後から KaTeX で描く。中身はソースのまま入れておき、KaTeX を読み込む前や読み込めないときにも読めるようにする
+ */
+function mathPlaceholder(content: string, display: boolean, attrs = ''): string {
+  const source = md.utils.escapeHtml(display ? content.trim() : content)
+  return display ? `<div class="math math-display"${attrs}>${source}</div>\n` : `<span class="math">${source}</span>`
+}
+
+// ブロックの数式（$$…$$）には、スクロール同期の目印（data-line）を付ける。プラグインの render には属性が渡らないので、ここで描く
+md.renderer.rules.math_block = (tokens, idx, _options, _env, self) => mathPlaceholder(tokens[idx].content, true, self.renderAttrs(tokens[idx]))
 
 // スクロール同期でエディタの行とプレビューの要素を対応させるため、ブロック要素に元の行番号（0 始まり）を付ける
 md.core.ruler.push('data_line', (state) => {
@@ -24,12 +39,18 @@ md.core.ruler.push('data_line', (state) => {
 const renderFence = md.renderer.rules.fence!
 md.renderer.rules.fence = (tokens, idx, options, env, self) => {
   const token = tokens[idx]
+  // ```math は、GitHub と同じくブロックの数式にする
+  if (isFence(token, 'math')) return mathPlaceholder(token.content, true, self.renderAttrs(token))
   if (!isMermaid(token)) return renderFence(tokens, idx, options, env, self)
   return `<div class="mermaid-block"${self.renderAttrs(token)}><pre><code>${md.utils.escapeHtml(token.content)}</code></pre></div>\n`
 }
 
 function isMermaid(token: Token): boolean {
-  return token.type === 'fence' && token.info.trim().split(/\s+/)[0].toLowerCase() === 'mermaid'
+  return isFence(token, 'mermaid')
+}
+
+function isFence(token: Token, language: string): boolean {
+  return token.type === 'fence' && token.info.trim().split(/\s+/)[0].toLowerCase() === language
 }
 
 // プレビューのリンクは新しいタブで開く（index.html の <base target="_blank">）。opener を渡すと、開いた先のページが
@@ -55,8 +76,8 @@ export function previewText(markdown: string): string {
   const parts: string[] = []
   for (const token of md.parse(markdown.slice(0, PREVIEW_SOURCE_LENGTH), {})) {
     if (token.type === 'inline') parts.push(inlineText(token.children ?? []))
-    // Mermaid のソースは一覧では図にならず、記号の羅列になるだけなので除く
-    else if ((token.type === 'fence' && !isMermaid(token)) || token.type === 'code_block') parts.push(token.content)
+    // Mermaid とブロックの数式のソースは、一覧では図や式にならず、記号の羅列になるだけなので除く
+    else if ((token.type === 'fence' && !isMermaid(token) && !isFence(token, 'math')) || token.type === 'code_block') parts.push(token.content)
   }
   // 絵文字などのサロゲートペアを途中で切らないよう、コードポイント単位で数える
   const chars = Array.from(parts.join(' ').replace(/\s+/g, ' ').trim())
@@ -89,6 +110,8 @@ function inlineText(tokens: Token[]): string {
       switch (token.type) {
         case 'text':
         case 'code_inline':
+        // 行の中の数式は、文の一部なのでソースのまま入れる
+        case 'math_inline':
           return token.content
         case 'softbreak':
         case 'hardbreak':
