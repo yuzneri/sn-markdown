@@ -39,6 +39,51 @@
   font-size: 1em;
 }
 
+/* 見出しを畳む・開くボタン（preview-fold.ts）。見出しの左の余白（.preview の padding）に置く。
+   マウスでは、見出しに載せたときと畳んでいるときだけ見せる。タッチの端末では常に見せる */
+.preview > h1,
+.preview > h2,
+.preview > h3,
+.preview > h4,
+.preview > h5,
+.preview > h6 {
+  position: relative;
+}
+
+.heading-fold {
+  position: absolute;
+  top: 0;
+  left: -1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1.3em;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--sn-stylekit-neutral-color);
+  opacity: 0;
+  cursor: pointer;
+}
+
+.preview > :hover > .heading-fold,
+.heading-fold:focus-visible,
+.is-folded > .heading-fold {
+  opacity: 0.8;
+}
+
+@media (hover: none) {
+  .heading-fold {
+    opacity: 0.8;
+  }
+}
+
+/* 畳んだ見出しの後ろは隠す。要素ごとの display の指定より先に効かせる */
+.preview > [hidden] {
+  display: none !important;
+}
+
 .preview h1,
 .preview h2 {
   padding-bottom: 0.3em;

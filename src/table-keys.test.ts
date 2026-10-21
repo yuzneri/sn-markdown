@@ -13,7 +13,7 @@ afterEach(() => parents.splice(0).forEach((parent) => parent.remove()))
 function create(text: string, onContextChange: (context: CursorContext) => void = () => {}): { editor: MarkdownEditor; view: EditorView } {
   const parent = document.body.appendChild(document.createElement('div'))
   parents.push(parent)
-  const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange })
+  const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange, onFoldsChange: () => {} })
   return { editor, view: EditorView.findFromDOM(parent)! }
 }
 

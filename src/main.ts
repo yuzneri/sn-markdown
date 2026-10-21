@@ -10,6 +10,7 @@ import { createLayout, type Layout } from './layout'
 import { renderMath } from './math'
 import { savedMode, withMode } from './preferences'
 import { headings, previewText, renderHtml } from './render'
+import { applyPreviewFolds, enablePreviewFold } from './preview-fold'
 import { enableScrollSync, type ScrollSync } from './scroll-sync'
 import { enableTaskToggle } from './task'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
@@ -39,6 +40,7 @@ function renderPreview(): void {
   // 編集モードではプレビューが見えないので描画しない。モードを切り替えたときに描画する
   if (!editor || !layout || layout.mode === 'edit') return
   layout.showPreview(renderHtml(editor.text))
+  applyPreviewFolds(layout.preview, editor.foldedLines())
   renderDiagrams(layout.preview, appearance, renderPreview)
   renderMath(layout.preview, renderPreview)
   scrollSync?.refresh()
@@ -89,6 +91,7 @@ const bridge = connectNote((update) => {
   layout.setLocked(update.locked)
   enableDiagramViewer(layout.preview)
   enableTaskToggle(layout.preview, (line) => editor?.toggleTask(line) ?? false)
+  enablePreviewFold(layout.preview, (line) => editor?.toggleFold(line))
   onLanguageLoaded(renderPreview)
   editor = createEditor(layout.editorPane, update, {
     onChange(text) {
@@ -100,6 +103,12 @@ const bridge = connectNote((update) => {
     },
     onContextChange(context) {
       layout?.setContext(context)
+    },
+    // エディタで畳む・開くと、プレビューの見出しも畳み直す（打って描き直すときは renderPreview が畳み直す）
+    onFoldsChange() {
+      if (!editor || !layout || layout.mode === 'edit') return
+      applyPreviewFolds(layout.preview, editor.foldedLines())
+      scrollSync?.refresh()
     },
   })
   scrollSync = enableScrollSync({

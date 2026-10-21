@@ -9,11 +9,11 @@ import './jsdom-range'
 const parents: HTMLElement[] = []
 afterEach(() => parents.splice(0).forEach((parent) => parent.remove()))
 
-function create(doc: string) {
+function create(doc: string, onFoldsChange = () => {}) {
   const parent = document.body.appendChild(document.createElement('div'))
   parents.push(parent)
-  createEditor(parent, { text: doc, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {} })
-  return { view: EditorView.findFromDOM(parent)!, parent }
+  const editor = createEditor(parent, { text: doc, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange })
+  return { editor, view: EditorView.findFromDOM(parent)!, parent }
 }
 
 function folded(view: EditorView): string[] {
@@ -44,8 +44,25 @@ describe('折りたたみ', () => {
   it('ロック中のノートも畳める（表示だけを変える）', () => {
     const parent = document.body.appendChild(document.createElement('div'))
     parents.push(parent)
-    createEditor(parent, { text: doc, locked: true }, { onChange: () => {}, onError: () => {}, onContextChange: () => {} })
+    createEditor(parent, { text: doc, locked: true }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange: () => {} })
     const view = EditorView.findFromDOM(parent)!
     expect(foldCode(view)).toBe(true)
+  })
+
+  it('行を指定して畳み・開き（プレビューの見出しのボタン）、畳んでいる行と、変わったことを知らせる', () => {
+    let changes = 0
+    const { editor } = create(doc, () => changes++)
+    editor.toggleFold(4)
+    expect([...editor.foldedLines()]).toEqual([4])
+    editor.toggleFold(4)
+    expect([...editor.foldedLines()]).toEqual([])
+    expect(changes).toBe(2)
+  })
+
+  it('畳めない行や、範囲の外の行では何もしない', () => {
+    const { editor } = create(doc)
+    editor.toggleFold(2)
+    editor.toggleFold(99)
+    expect([...editor.foldedLines()]).toEqual([])
   })
 })

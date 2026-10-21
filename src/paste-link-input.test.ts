@@ -13,7 +13,7 @@ afterEach(() => parents.splice(0).forEach((parent) => parent.remove()))
 function input(doc: string, selected: string, text: string): string {
   const parent = document.body.appendChild(document.createElement('div'))
   parents.push(parent)
-  const editor = createEditor(parent, { text: doc, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {} })
+  const editor = createEditor(parent, { text: doc, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange: () => {} })
   const view = EditorView.findFromDOM(parent)!
   const from = doc.indexOf(selected)
   const to = from + selected.length

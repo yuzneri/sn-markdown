@@ -60,7 +60,7 @@ function paste(doc: string, clipboard: Record<string, string>, files: File[] = [
   const anchor = doc.includes('‸') ? doc.indexOf('‸') : doc.indexOf('«')
   const head = doc.includes('‸') ? anchor : doc.indexOf('»') - 1
   const text = doc.replace(/[‸«»]/g, '')
-  const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {} })
+  const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange: () => {} })
   const view = EditorView.findFromDOM(parent)!
   view.dispatch({ selection: { anchor, head } })
   const event = new Event('paste', { bubbles: true, cancelable: true })

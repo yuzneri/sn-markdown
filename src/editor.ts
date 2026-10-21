@@ -3,7 +3,7 @@ import { EditorView, keymap, type Command } from '@codemirror/view'
 import { autocompletion } from '@codemirror/autocomplete'
 import { closeSearchPanel, openSearchPanel, search, searchKeymap, searchPanelOpen } from '@codemirror/search'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
-import { foldGutter, foldKeymap } from '@codemirror/language'
+import { foldable, foldedRanges, foldEffect, foldGutter, foldKeymap, foldState, unfoldEffect } from '@codemirror/language'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { ChevronDown, ChevronRight, createElement } from 'lucide'
@@ -43,6 +43,10 @@ export interface MarkdownEditor {
   run(command: Command): void
   /** 検索・置換のパネルを開く（開いていれば閉じる） */
   toggleSearch(): void
+  /** 畳んでいる範囲の始まりの行（0 始まり。見出しなら、その見出しの行）。プレビューの見出しを同じく畳むのに使う */
+  foldedLines(): Set<number>
+  /** line 行目（0 始まり）で畳めるもの（見出しの節など）を畳む。畳んでいれば開く（プレビューの見出しのボタン） */
+  toggleFold(line: number): void
   /** line 行目（0 始まり）のタスクのチェックを切り替える。行にタスクがないとき、ロック中は false */
   toggleTask(line: number): boolean
 }
@@ -63,6 +67,8 @@ export interface EditorHandlers {
   onError(message: string): void
   /** カーソルのある場所の種類が変わった（書式バーの右の組を差し替える） */
   onContextChange(context: CursorContext): void
+  /** 畳んでいる範囲が変わった（プレビューの見出しを畳み直す） */
+  onFoldsChange(): void
 }
 
 export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers: EditorHandlers): MarkdownEditor {
@@ -104,6 +110,7 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
           // 構文木の解析が進んだだけの更新でも変わりうるので、更新のたびに調べる（調べるのはカーソルの行だけ）
           const now = cursorContext(update.state)
           if (now !== context) handlers.onContextChange((context = now))
+          if (update.startState.field(foldState, false) !== update.state.field(foldState, false)) handlers.onFoldsChange()
         }),
       ],
     }),
@@ -146,6 +153,26 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
     run(command) {
       command(view)
       view.focus()
+    },
+    foldedLines() {
+      const lines = new Set<number>()
+      foldedRanges(view.state).between(0, view.state.doc.length, (from) => {
+        lines.add(view.state.doc.lineAt(from).number - 1)
+      })
+      return lines
+    },
+    toggleFold(line) {
+      const { doc } = view.state
+      if (!Number.isInteger(line) || line < 0 || line >= doc.lines) return
+      const { from, to } = doc.line(line + 1)
+      // 見出しの節を畳んだ範囲は、見出しの行の終わりから始まる
+      const folded = foldedRanges(view.state).iter(to)
+      if (folded.value && folded.from === to) {
+        view.dispatch({ effects: unfoldEffect.of({ from: folded.from, to: folded.to }) })
+        return
+      }
+      const range = foldable(view.state, from, to)
+      if (range) view.dispatch({ effects: foldEffect.of(range) })
     },
     toggleTask(line) {
       const spec = toggleTask(view.state, line)
