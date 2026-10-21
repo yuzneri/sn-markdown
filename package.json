@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
+    "package": "node scripts/package.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "@types/node": "26.6.5",
+    "fflate": "0.8.3",
     "typescript": "7.0.2",
     "vite": "8.3.4",
     "vitest": "5.0.5"
