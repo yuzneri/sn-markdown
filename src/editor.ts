@@ -4,6 +4,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import type { NoteUpdate } from './bridge'
+import { collapseDataUrls } from './data-url'
 import { imageInsertion } from './image-insert'
 import { editorTheme } from './theme'
 
@@ -39,6 +40,7 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         EditorView.lineWrapping,
         editorTheme,
         images.extension,
+        collapseDataUrls,
         EditorView.updateListener.of((update) => {
           if (update.transactions.some(isLocalEdit)) handlers.onChange(update.state.doc.toString())
         }),

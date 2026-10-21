@@ -41,6 +41,14 @@ const editorStyle = EditorView.theme({
   // 既定のキャレット色は黒（ライト）か白（ダーク）の固定値
   '.cm-content': { padding: '1rem 0', caretColor: 'var(--sn-stylekit-editor-foreground-color)' },
   '.cm-line': { padding: '0 1rem' },
+  // 埋め込んだ画像の data: URL を折りたたんだ表示（data-url.ts）
+  '.cm-data-url': {
+    padding: '0 0.4em',
+    borderRadius: '3px',
+    background: 'var(--sn-stylekit-contrast-background-color)',
+    color: 'var(--sn-stylekit-neutral-color)',
+    fontSize: '0.85em',
+  },
 })
 
 export const editorTheme = [editorStyle, syntaxHighlighting(highlightStyle)]
