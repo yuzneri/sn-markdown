@@ -1,5 +1,4 @@
 import type { StateCommand } from '@codemirror/state'
-import { createElement, Type } from 'lucide'
 import { element } from './dom'
 import { createFormatBar } from './format-bar'
 import { MODES, type Mode } from './preferences'
@@ -19,32 +18,24 @@ export interface Layout {
   setLocked(locked: boolean): void
   /** サニタイズ済みの HTML を表示する */
   showPreview(html: string): void
-  /** バーに短いメッセージ（エラーなど）をしばらく出す */
+  /** バーの下に短いメッセージ（エラーなど）をしばらく出す */
   showMessage(message: string): void
 }
 
 export interface LayoutHandlers {
   onModeChange(mode: Mode): void
-  onFormatBarToggle(visible: boolean): void
   /** 書式のボタンが押された */
   onCommand(command: StateCommand): void
   /** Image ボタンで画像が選ばれた */
   onImageFiles(files: File[]): void
 }
 
-export function createLayout(root: HTMLElement, initial: { mode: Mode; formatBar: boolean }, handlers: LayoutHandlers): Layout {
+export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutHandlers): Layout {
+  // 書式のボタンとモードの切り替えを 1 行に並べる。幅が足りなければ、書式のボタンの部分だけを横にスクロールする
   const toolbar = element('div', 'toolbar')
+  const formatBar = createFormatBar(handlers)
 
-  const formatToggle = element('button', 'tool-button format-toggle')
-  formatToggle.type = 'button'
-  formatToggle.title = 'Formatting toolbar'
-  formatToggle.setAttribute('aria-label', 'Formatting toolbar')
-  formatToggle.append(createElement(Type, { width: 16, height: 16, 'aria-hidden': 'true' }))
-  formatToggle.addEventListener('click', () => {
-    setFormatBarVisible(!formatBarVisible)
-    handlers.onFormatBarToggle(formatBarVisible)
-  })
-
+  // 行の中に置く場所はないので、バーの下に重ねて出す
   const message = element('span', 'toolbar-message')
   message.setAttribute('role', 'status')
   let messageTimer: ReturnType<typeof setTimeout> | undefined
@@ -64,24 +55,17 @@ export function createLayout(root: HTMLElement, initial: { mode: Mode; formatBar
     return button
   })
   modes.append(...buttons)
-  toolbar.append(formatToggle, message, modes)
+  toolbar.append(formatBar.element, modes, message)
 
-  const formatBar = createFormatBar(handlers)
   const panes = element('div', 'panes')
   const editorPane = element('div', 'pane editor-pane')
   const previewPane = element('div', 'pane preview-pane')
   const preview = element('div', 'preview')
   previewPane.append(preview)
   panes.append(editorPane, previewPane)
-  root.append(toolbar, formatBar.element, panes)
+  root.append(toolbar, panes)
 
-  let formatBarVisible = initial.formatBar
-  const setFormatBarVisible = (visible: boolean) => {
-    formatBarVisible = visible
-    formatBar.element.hidden = !visible
-    formatToggle.setAttribute('aria-pressed', String(visible))
-  }
-  let current = initial.mode
+  let current = initial
   let locked = false
   // プレビューのモードではエディタが見えず、ロック中は書き換えられないので、書式のボタンは押せないようにする
   const updateFormatBar = () => formatBar.setEnabled(current !== 'preview' && !locked)
@@ -111,7 +95,6 @@ export function createLayout(root: HTMLElement, initial: { mode: Mode; formatBar
       messageTimer = setTimeout(() => (message.textContent = ''), MESSAGE_DURATION)
     },
   }
-  setFormatBarVisible(initial.formatBar)
-  layout.setMode(initial.mode)
+  layout.setMode(initial)
   return layout
 }

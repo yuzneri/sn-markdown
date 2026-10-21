@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { savedFormatBar, savedMode, withFormatBar, withMode } from './preferences'
+import { savedMode, withMode } from './preferences'
 
 describe('savedMode', () => {
   it('保存がなければ環境ごとの既定（モバイルは edit、ほかは split）', () => {
@@ -31,26 +31,5 @@ describe('withMode', () => {
 
   it('壊れた形の modes は作り直す', () => {
     expect(withMode({ modes: 'x' }, 'web', 'edit')).toEqual({ modes: { web: 'edit' } })
-  })
-})
-
-describe('savedFormatBar', () => {
-  it('保存がなければ、どの環境でも表示する', () => {
-    expect(savedFormatBar({}, 'mobile')).toBe(true)
-    expect(savedFormatBar({}, 'desktop')).toBe(true)
-  })
-
-  it('環境ごとに保存した値を使い、真偽値でなければ表示する', () => {
-    const preferences = { formatBar: { mobile: false, desktop: 'no' } }
-    expect(savedFormatBar(preferences, 'mobile')).toBe(false)
-    expect(savedFormatBar(preferences, 'desktop')).toBe(true)
-    expect(savedFormatBar(preferences, 'web')).toBe(true)
-  })
-})
-
-describe('withFormatBar', () => {
-  it('その環境の値だけを書き換え、モードなどほかの設定は残す', () => {
-    const preferences = { modes: { mobile: 'edit' }, formatBar: { desktop: true } }
-    expect(withFormatBar(preferences, 'mobile', false)).toEqual({ modes: { mobile: 'edit' }, formatBar: { desktop: true, mobile: false } })
   })
 })

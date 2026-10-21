@@ -17,6 +17,7 @@ body {
 }
 
 .toolbar {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -24,43 +25,19 @@ body {
   border-bottom: 1px solid var(--sn-stylekit-border-color);
 }
 
-.tool-button {
-  min-height: 1.75rem;
-  padding: 0 0.75rem;
-  border: 1px solid var(--sn-stylekit-border-color);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--sn-stylekit-neutral-color);
-  font: inherit;
-  font-size: var(--sn-stylekit-base-font-size);
-  cursor: pointer;
-}
-
-.tool-button[aria-pressed='true'] {
-  background: var(--sn-stylekit-contrast-background-color);
-  color: var(--sn-stylekit-info-color);
-}
-
-.format-toggle {
-  display: inline-flex;
-  align-items: center;
-  padding: 0 0.5rem;
-}
-
-/* 書式バー（format-bar.ts）。狭い画面では横にスクロールする */
+/* 書式のボタン（format-bar.ts）。モードの切り替えと同じ行に置き、幅が足りなければこの部分だけを横にスクロールする */
 .format-bar {
   display: flex;
-  flex-shrink: 0;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   gap: 0.125rem;
-  padding: 0.25rem 0.5rem;
   overflow-x: auto;
-  border-bottom: 1px solid var(--sn-stylekit-border-color);
   scrollbar-width: none;
-}
-
-.format-bar[hidden] {
-  display: none;
+  /* スクロールバーを隠しているので、右端を薄くして、まだボタンがあることを示す（収まっているときは右端が空いているだけ） */
+  mask-image: linear-gradient(to right, #000 calc(100% - 1.5rem), transparent);
+  /* 端までスクロールしたとき、最後のボタンが薄くした部分に重ならないようにする */
+  padding-inline-end: 1.5rem;
 }
 
 .format-button {
@@ -95,18 +72,31 @@ body {
   background: var(--sn-stylekit-border-color);
 }
 
+/* エラーなどのメッセージ。行の中に置く場所がないので、バーの下に重ねて出す */
 .toolbar-message {
-  min-width: 0;
-  overflow: hidden;
+  position: absolute;
+  top: 100%;
+  right: 0.5rem;
+  z-index: 1;
+  max-width: calc(100% - 1rem);
+  margin-top: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--sn-stylekit-border-color);
+  border-radius: 4px;
+  background: var(--sn-stylekit-background-color);
   color: var(--sn-stylekit-danger-color);
   font-size: var(--sn-stylekit-base-font-size);
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  /* 読むだけのものなので、下のエディタやプレビューへのクリックを遮らない */
+  pointer-events: none;
+}
+
+.toolbar-message:empty {
+  display: none;
 }
 
 .modes {
   display: flex;
-  margin-left: auto;
+  flex-shrink: 0;
   border: 1px solid var(--sn-stylekit-border-color);
   border-radius: 4px;
   overflow: hidden;

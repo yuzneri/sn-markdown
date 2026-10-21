@@ -7,7 +7,7 @@ import { renderDiagrams } from './diagram'
 import { createEditor, type MarkdownEditor } from './editor'
 import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
-import { savedFormatBar, savedMode, withFormatBar, withMode } from './preferences'
+import { savedMode, withMode } from './preferences'
 import { previewText, renderHtml } from './render'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
 
@@ -59,14 +59,10 @@ const bridge = connectNote((update) => {
     return
   }
   const environment = bridge.environment
-  const preferences = bridge.readPreferences()
-  layout = createLayout(app, { mode: savedMode(preferences, environment), formatBar: savedFormatBar(preferences, environment) }, {
+  layout = createLayout(app, savedMode(bridge.readPreferences(), environment), {
     onModeChange(mode) {
       bridge.writePreferences(withMode(bridge.readPreferences(), environment, mode))
       renderPreview()
-    },
-    onFormatBarToggle(visible) {
-      bridge.writePreferences(withFormatBar(bridge.readPreferences(), environment, visible))
     },
     onCommand(command) {
       editor?.run(command)

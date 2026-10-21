@@ -21,16 +21,6 @@ export function withMode(preferences: Record<string, unknown>, environment: Envi
   return withPerEnvironment(preferences, 'modes', environment, mode)
 }
 
-/** 書式バーを表示するか。保存がなければ表示する（モバイルはショートカットを使えないので、ボタンが要る） */
-export function savedFormatBar(preferences: Record<string, unknown>, environment: Environment): boolean {
-  const value = perEnvironment(preferences, 'formatBar')[environment]
-  return typeof value === 'boolean' ? value : true
-}
-
-export function withFormatBar(preferences: Record<string, unknown>, environment: Environment, visible: boolean): Record<string, unknown> {
-  return withPerEnvironment(preferences, 'formatBar', environment, visible)
-}
-
 function perEnvironment(preferences: Record<string, unknown>, key: string): Record<string, unknown> {
   const values = preferences[key]
   return typeof values === 'object' && values !== null ? (values as Record<string, unknown>) : {}
