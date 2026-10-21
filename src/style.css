@@ -106,14 +106,11 @@ body {
   gap: 0.125rem;
 }
 
-/* 見出しの一覧（outline.ts）。ツールバーの下に重ねて出し、右端は見出しのボタンにそろえる（right は JS で決める） */
-.outline-menu {
+/* ボタンの下に重ねて開く一覧（popup.ts）。ツールバーの下に重ねて出し、右端はボタンにそろえる（right は JS で決める） */
+.popup {
   position: absolute;
   top: 100%;
   z-index: 20;
-  display: flex;
-  flex-direction: column;
-  min-width: 12rem;
   max-width: calc(100% - 1rem);
   max-height: min(24rem, 70vh);
   margin-top: 0.25rem;
@@ -126,8 +123,15 @@ body {
   box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
 }
 
-.outline-menu[hidden] {
+.popup[hidden] {
   display: none;
+}
+
+/* 見出しの一覧（outline.ts） */
+.outline-menu {
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
 }
 
 .outline-item {
