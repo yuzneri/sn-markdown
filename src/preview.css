@@ -114,6 +114,76 @@
   height: auto;
 }
 
+.preview .mermaid-block.is-rendered {
+  cursor: zoom-in;
+}
+
+/* 図の拡大表示（viewer.ts）。モーダルの dialog で iframe いっぱいに重ねる */
+.diagram-viewer[open] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: var(--sn-stylekit-background-color);
+  color: var(--sn-stylekit-foreground-color);
+}
+
+.diagram-viewer::backdrop {
+  background: transparent;
+}
+
+.viewer-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  border-bottom: 1px solid var(--sn-stylekit-border-color);
+}
+
+.viewer-button {
+  min-width: 2rem;
+  min-height: 1.75rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--sn-stylekit-border-color);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: var(--sn-stylekit-base-font-size);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.viewer-close {
+  margin-left: auto;
+}
+
+.viewer-canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  /* ピンチとドラッグをブラウザのスクロールや拡大に使わせない */
+  touch-action: none;
+  cursor: grab;
+}
+
+.viewer-canvas.is-dragging {
+  cursor: grabbing;
+}
+
+.viewer-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
 .preview .mermaid-error {
   margin: -0.5em 0 1em;
   color: var(--sn-stylekit-danger-color);

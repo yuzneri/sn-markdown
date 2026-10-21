@@ -86,6 +86,10 @@ function show(block: HTMLElement, result: DiagramResult): void {
     // 既定の設定の DOMPurify はラベルの foreignObject を消してしまう
     block.innerHTML = result.svg
     block.classList.add('is-rendered')
+    // クリックで拡大表示する（viewer.ts）。キーボードでも選べるようにする
+    block.tabIndex = 0
+    block.setAttribute('role', 'button')
+    block.setAttribute('aria-label', 'Enlarge diagram')
   } else {
     // ソースは残したまま、その下にエラーを出す
     const error = document.createElement('p')

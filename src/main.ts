@@ -9,6 +9,7 @@ import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
 import { savedMode, withMode } from './mode'
 import { previewText, renderHtml } from './render'
+import { closeDiagramViewer, enableDiagramViewer } from './viewer'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 let editor: MarkdownEditor | undefined
@@ -16,6 +17,7 @@ let layout: Layout | undefined
 // テーマの明暗。Mermaid の図のテーマに使う（ほかの色はすべて CSS 変数なので、テーマの差し替えだけで追従する）
 let appearance = watchAppearance((next) => {
   appearance = next
+  closeDiagramViewer()
   renderPreview()
 })
 
@@ -47,6 +49,7 @@ const bridge = connectNote((update) => {
     bridge.writePreferences(withMode(bridge.readPreferences(), bridge.environment, mode))
     renderPreview()
   })
+  enableDiagramViewer(layout.preview)
   onLanguageLoaded(renderPreview)
   editor = createEditor(layout.editorPane, update, (text) => {
     bridge.save(text, previewText(text))
