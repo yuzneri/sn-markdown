@@ -5,6 +5,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import type { NoteUpdate } from './bridge'
+import { closeCodeFence } from './code-fence'
 import { completeCodeLanguage } from './code-language'
 import { formatKeymap } from './commands'
 import { collapseDataUrls } from './data-url'
@@ -53,6 +54,7 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         // 最初から候補を選んでおくと、言語名を打ち終えて Enter を押したときに、改行の代わりに候補が入る。
         // 選ぶのは、矢印キーで動かしたときかクリック（タップ）したときだけにする
         autocompletion({ override: [completeCodeLanguage], selectOnOpen: false, icons: false }),
+        closeCodeFence,
         EditorView.lineWrapping,
         editorTheme,
         images.extension,
