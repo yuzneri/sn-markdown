@@ -12,5 +12,9 @@
   --sn-stylekit-paragraph-text-color: #bbbbbb;
   --sn-stylekit-info-color: #5aa0ff;
   --sn-stylekit-neutral-color: #7a7a7a;
+  /* success / danger / warning は SN の Midnight テーマと同じ値 */
+  --sn-stylekit-success-color: #01be79;
+  --sn-stylekit-danger-color: #f80324;
+  --sn-stylekit-warning-color: #f6a200;
   --sn-stylekit-scrollbar-thumb-color: #3a3a3a;
 }

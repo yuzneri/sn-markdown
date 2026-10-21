@@ -4,6 +4,7 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirro
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import type { NoteUpdate } from './bridge'
+import { editorTheme } from './theme'
 
 export interface MarkdownEditor {
   /** 外部（他端末など）からの本文の変更とロックの状態を反映する。本文の変更は保存も履歴への追加もしない */
@@ -24,7 +25,7 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, onChange:
         // 補完 UI（autocompletion）を入れていないので、HTML タグの補完ソースは登録しない
         markdown({ base: markdownLanguage, codeLanguages: languages, completeHTMLTags: false }),
         EditorView.lineWrapping,
-        layout,
+        editorTheme,
         EditorView.updateListener.of((update) => {
           if (update.transactions.some(isLocalEdit)) onChange(update.state.doc.toString())
         }),
@@ -41,14 +42,6 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, onChange:
     },
   }
 }
-
-// CodeMirror は自分のスタイルを実行時に head へ追加するので、style.css ではなくテーマとして書かないと詳細度が同じでも負ける
-const layout = EditorView.theme({
-  '&': { flex: '1', minHeight: '0', fontSize: 'var(--sn-stylekit-font-size-editor)' },
-  '.cm-scroller': { fontFamily: 'var(--sn-stylekit-monospace-font)' },
-  '.cm-content': { padding: '1rem 0' },
-  '.cm-line': { padding: '0 1rem' },
-})
 
 // readOnly だけでは足りない。lang-markdown のキーマップ（リスト内の Enter など）は readOnly を確かめずに本文を書き換える。
 // editable を外すと contenteditable でなくなり、キー入力そのものが届かない（選択とコピーはできる）
