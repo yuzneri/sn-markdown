@@ -7,6 +7,7 @@ import { renderDiagrams } from './diagram'
 import { createEditor, type MarkdownEditor } from './editor'
 import { onLanguageLoaded } from './highlight'
 import { createLayout, type Layout } from './layout'
+import { renderMath } from './math'
 import { savedMode, withMode } from './preferences'
 import { headings, previewText, renderHtml } from './render'
 import { enableScrollSync, type ScrollSync } from './scroll-sync'
@@ -39,6 +40,7 @@ function renderPreview(): void {
   if (!editor || !layout || layout.mode === 'edit') return
   layout.showPreview(renderHtml(editor.text))
   renderDiagrams(layout.preview, appearance, renderPreview)
+  renderMath(layout.preview, renderPreview)
   scrollSync?.refresh()
 }
 
