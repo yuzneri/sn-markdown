@@ -5,6 +5,8 @@
   font-size: var(--sn-stylekit-font-size-editor);
   line-height: 1.6;
   overflow-wrap: anywhere;
+  /* 表の折り返しを、プレビューの幅で切り替える（@container）。Split ではプレビューは画面の半分になる */
+  container-type: inline-size;
 }
 
 .preview > :first-child {
@@ -203,6 +205,15 @@
 
 .preview th {
   background: var(--sn-stylekit-contrast-background-color);
+}
+
+/* プレビューの幅が狭いときは、表のセルを折り返さず、はみ出した分は表を横にスクロールして見る。日本語と
+   overflow-wrap: anywhere の文字はどこでも折り返せるので、折り返すと列が数文字の幅まで詰まる。セルの中の <br> では改行する */
+@container (max-width: 640px) {
+  .preview th,
+  .preview td {
+    white-space: nowrap;
+  }
 }
 
 .preview img {
