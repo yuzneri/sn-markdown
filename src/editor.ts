@@ -3,7 +3,7 @@ import { EditorView, keymap, type Command } from '@codemirror/view'
 import { autocompletion } from '@codemirror/autocomplete'
 import { closeSearchPanel, openSearchPanel, search, searchKeymap, searchPanelOpen } from '@codemirror/search'
 import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
-import { foldable, foldedRanges, foldEffect, foldGutter, foldKeymap, foldState, unfoldEffect } from '@codemirror/language'
+import { foldable, foldedRanges, foldEffect, foldGutter, foldKeymap, foldState, forceParsing, unfoldEffect } from '@codemirror/language'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { languages } from '@codemirror/language-data'
 import { ChevronDown, ChevronRight, createElement } from 'lucide'
@@ -183,6 +183,9 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
         view.dispatch({ effects: unfoldEffect.of({ from: folded.from, to: folded.to }) })
         return
       }
+      // 裏の解析は、エディタに見えている範囲の 10 万字先までしか進まない（画像を埋め込んだノートでは、すぐに届く）。
+      // プレビューの見出しはその先にもあり、見出しの節は文書の終わりまで続くこともあるので、最後まで解析してから調べる
+      forceParsing(view, doc.length)
       const range = foldable(view.state, from, to)
       if (range) view.dispatch({ effects: foldEffect.of(range) })
     },

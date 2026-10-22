@@ -63,6 +63,17 @@ describe('折りたたみ', () => {
     expect(changes).toBe(2)
   })
 
+  it('プレビューのボタンでは、裏の解析がまだ届いていない見出し（画像を埋め込んだ長いノートの後ろのほう）も畳める', () => {
+    // 作った直後は、先頭の 3000 字のあたりまでしか解析しない。残りは後から、エディタに見えている範囲の 10 万字先までを解析する
+    const long = `## A\n\n${Array.from({ length: 1000 }, (_, i) => `text ${i}`).join('\n\n')}\n\n## B\n\nb text\n\n## C\n\nc text`
+    const parent = document.body.appendChild(document.createElement('div'))
+    parents.push(parent)
+    const editor = createEditor(parent, { text: long, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange: () => {} })
+    const view = EditorView.findFromDOM(parent)!
+    editor.toggleFold(view.state.doc.lineAt(long.indexOf('## B')).number - 1)
+    expect(folded(view)).toEqual(['\n\nb text'])
+  })
+
   it('select（プレビューのダブルクリック）でカーソルを置く。畳んだ範囲の中なら、その範囲を開く', () => {
     let changes = 0
     const { editor, view } = create(doc, () => changes++)
