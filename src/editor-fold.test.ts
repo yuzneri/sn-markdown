@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // エディタ（createEditor）で、見出しを次の同じか上の階層の見出しまで畳めることと、印の列が出ることを確かめる
 import { afterEach, describe, expect, it } from 'vitest'
-import { foldCode, foldedRanges, unfoldAll } from '@codemirror/language'
+import { foldCode, foldedRanges, forceParsing, unfoldAll } from '@codemirror/language'
 import { EditorView } from '@codemirror/view'
 import { createEditor } from './editor'
 import './jsdom-range'
@@ -13,7 +13,15 @@ function create(doc: string, onFoldsChange = () => {}) {
   const parent = document.body.appendChild(document.createElement('div'))
   parents.push(parent)
   const editor = createEditor(parent, { text: doc, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange })
-  return { editor, view: EditorView.findFromDOM(parent)!, parent }
+  const view = EditorView.findFromDOM(parent)!
+  parseAll(view)
+  return { editor, view, parent }
+}
+
+// 作った直後の構文木は、解析の時間の上限（20ms）で途中までのことがある（テストを並べて動かして重いときなど）。
+// 画面では残りを後から解析するが、テストはすぐに畳むので、最後まで解析しておく
+function parseAll(view: EditorView): void {
+  expect(forceParsing(view, view.state.doc.length, 5000)).toBe(true)
 }
 
 function folded(view: EditorView): string[] {
@@ -46,6 +54,7 @@ describe('折りたたみ', () => {
     parents.push(parent)
     createEditor(parent, { text: doc, locked: true }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange: () => {} })
     const view = EditorView.findFromDOM(parent)!
+    parseAll(view)
     expect(foldCode(view)).toBe(true)
   })
 

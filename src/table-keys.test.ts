@@ -3,6 +3,7 @@
 // 表のキーは、lang-markdown のキーマップ（リストの続きの Enter）と字下げの Tab より先に効き、表の外では今までどおりに譲る。
 // runScopeHandlers でキーイベントをキーマップに通す
 import { afterEach, describe, expect, it } from 'vitest'
+import { forceParsing } from '@codemirror/language'
 import { EditorView, runScopeHandlers } from '@codemirror/view'
 import { createEditor, type CursorContext, type MarkdownEditor } from './editor'
 import './jsdom-range'
@@ -14,7 +15,11 @@ function create(text: string, onContextChange: (context: CursorContext) => void 
   const parent = document.body.appendChild(document.createElement('div'))
   parents.push(parent)
   const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange, onFoldsChange: () => {} })
-  return { editor, view: EditorView.findFromDOM(parent)! }
+  const view = EditorView.findFromDOM(parent)!
+  // 作った直後の構文木は、解析の時間の上限（20ms）で途中までのことがある（テストを並べて動かして重いときなど）。
+  // 画面では残りを後から解析して知らせ直すが、テストはすぐにカーソルを動かすので、最後まで解析しておく
+  expect(forceParsing(view, view.state.doc.length, 5000)).toBe(true)
+  return { editor, view }
 }
 
 function press(doc: string, key: string, shiftKey = false): MarkdownEditor {
