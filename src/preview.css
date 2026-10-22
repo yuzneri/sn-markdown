@@ -194,6 +194,8 @@
   border-collapse: collapse;
   display: block;
   max-width: 100%;
+  /* 表には既定の余白がないので、段落や引用と同じだけ空ける（続けて置いた表どうしが、くっつかないように） */
+  margin: 1em 0;
   overflow-x: auto;
 }
 
