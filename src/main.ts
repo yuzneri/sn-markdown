@@ -14,7 +14,7 @@ import { applyPreviewFolds, enablePreviewFold } from './preview-fold'
 import { enablePreviewJump } from './preview-jump'
 import { enableScrollSync, type ScrollSync } from './scroll-sync'
 import { enableTaskToggle } from './task'
-import { closeDiagramViewer, enableDiagramViewer } from './viewer'
+import { closeViewer, enableViewer } from './viewer'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
 let editor: MarkdownEditor | undefined
@@ -23,7 +23,7 @@ let scrollSync: ScrollSync | undefined
 // テーマの明暗。Mermaid の図のテーマに使う（ほかの色はすべて CSS 変数なので、テーマの差し替えだけで追従する）
 let appearance = watchAppearance((next) => {
   appearance = next
-  closeDiagramViewer()
+  closeViewer()
   renderPreview()
 })
 
@@ -90,7 +90,7 @@ const bridge = connectNote((update) => {
     },
   })
   layout.setLocked(update.locked)
-  enableDiagramViewer(layout.preview)
+  enableViewer(layout.preview)
   enableTaskToggle(layout.preview, (line) => editor?.toggleTask(line) ?? false)
   enablePreviewFold(layout.preview, (line) => editor?.toggleFold(line))
   enablePreviewJump(

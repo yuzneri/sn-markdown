@@ -160,6 +160,11 @@
   max-width: 100%;
 }
 
+/* 押すと拡大表示する（viewer.ts）。リンクの中の画像は、押すとリンクを開く */
+.preview img:not(a img) {
+  cursor: zoom-in;
+}
+
 /* Mermaid（diagram.ts）。図にする前と、図にできなかったときはソースを表示する */
 .preview .mermaid-block.is-rendered {
   margin: 1em 0;
@@ -175,8 +180,8 @@
   cursor: zoom-in;
 }
 
-/* 図の拡大表示（viewer.ts）。モーダルの dialog で iframe いっぱいに重ねる */
-.diagram-viewer[open] {
+/* 図と画像の拡大表示（viewer.ts）。モーダルの dialog で iframe いっぱいに重ねる */
+.viewer[open] {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -190,7 +195,7 @@
   color: var(--sn-stylekit-foreground-color);
 }
 
-.diagram-viewer::backdrop {
+.viewer::backdrop {
   background: transparent;
 }
 

@@ -9,39 +9,44 @@ const WHEEL_SENSITIVITY = 0.002
 const LINE_HEIGHT = 16
 
 /**
- * プレビュー中の描き終えた図をクリック（フォーカスして Enter / Space でも）すると、編集領域いっぱいに拡大して表示する。
+ * プレビュー中の描き終えた図と画像をクリック（図はフォーカスして Enter / Space でも）すると、編集領域いっぱいに拡大して表示する。
  * プレビューは描き直すたびに中身が作り直されるので、プレビューの要素に 1 回だけ登録する
  */
-export function enableDiagramViewer(preview: HTMLElement): void {
+export function enableViewer(preview: HTMLElement): void {
   preview.addEventListener('click', (event) => {
-    const svg = diagramAt(event.target)
-    if (svg) openViewer(svg)
+    const target = viewableAt(event.target)
+    if (target) openViewer(target)
   })
   preview.addEventListener('keydown', (event) => {
     if (event.key !== 'Enter' && event.key !== ' ') return
-    const svg = diagramAt(event.target)
-    if (!svg) return
+    const target = viewableAt(event.target)
+    if (!target) return
     event.preventDefault()
-    openViewer(svg)
+    openViewer(target)
   })
 }
 
 /** 開いている拡大表示を閉じる。拡大表示の図は開いたときの複製なので、テーマの明暗が変わると背景と色が合わなくなる */
-export function closeDiagramViewer(): void {
-  document.querySelector<HTMLDialogElement>('dialog.diagram-viewer')?.close()
+export function closeViewer(): void {
+  document.querySelector<HTMLDialogElement>('dialog.viewer')?.close()
 }
 
-function diagramAt(target: EventTarget | null): SVGSVGElement | null {
+type Viewable = SVGSVGElement | HTMLImageElement
+
+function viewableAt(target: EventTarget | null): Viewable | null {
   if (!(target instanceof Element)) return null
+  // リンクの中の画像は、押すとリンクを開く。読み込めていない画像（大きさが 0）は、拡大しても何も見えない
+  if (target instanceof HTMLImageElement) return target.closest('a') || target.naturalWidth === 0 ? null : target
   return target.closest('.mermaid-block.is-rendered')?.querySelector('svg') ?? null
 }
 
-function openViewer(source: SVGSVGElement): void {
-  const size = naturalSize(source)
+function openViewer(source: Viewable): void {
+  const isImage = source instanceof HTMLImageElement
+  const size = isImage ? { width: source.naturalWidth, height: source.naturalHeight } : naturalSize(source)
   // SN の iframe には allow="fullscreen" がなく、ブラウザの全画面表示は使えない。モーダルの dialog で iframe いっぱいに重ねる。
   // 開いている間は後ろ（エディタ）に入力が届かず、Esc で閉じ、閉じるとフォーカスが元の図に戻る
-  const dialog = element('dialog', 'diagram-viewer')
-  dialog.setAttribute('aria-label', 'Diagram')
+  const dialog = element('dialog', 'viewer')
+  dialog.setAttribute('aria-label', isImage ? 'Image' : 'Diagram')
   const toolbar = element('div', 'viewer-toolbar')
   const zoomOut = button('−', 'Zoom out')
   const actual = button('100%', 'Actual size')
@@ -53,12 +58,17 @@ function openViewer(source: SVGSVGElement): void {
 
   const canvas = element('div', 'viewer-canvas')
   const content = element('div', 'viewer-content')
-  const diagram = source.cloneNode(true) as SVGSVGElement
-  // プレビューではペインの幅に縮めている（mermaid の max-width と preview.css）。ここでは本来の大きさで置き、倍率は transform で付ける
-  diagram.setAttribute('width', String(size.width))
-  diagram.setAttribute('height', String(size.height))
-  diagram.style.maxWidth = 'none'
-  content.append(diagram)
+  const copy = source.cloneNode(true) as Viewable
+  // プレビューではペインの幅に縮めている（mermaid の max-width と preview.css）。ここでは本来の大きさで置き、倍率は transform で付ける。
+  // 画像は、ノートの HTML の style で大きさを指定していることがあるので、style でも本来の大きさにする
+  copy.setAttribute('width', String(size.width))
+  copy.setAttribute('height', String(size.height))
+  copy.style.maxWidth = 'none'
+  if (isImage) {
+    copy.style.width = `${size.width}px`
+    copy.style.height = `${size.height}px`
+  }
+  content.append(copy)
   canvas.append(content)
   dialog.append(toolbar, canvas)
   document.body.append(dialog)
@@ -74,7 +84,9 @@ function openViewer(source: SVGSVGElement): void {
   }
 
   dialog.showModal()
-  show(fitView(size, area()))
+  // 画像は、引き伸ばすとぼやけるので、最初は 100% より大きくしない（図はベクターなので、画面いっぱいに合わせる）
+  const fitted = fitView(size, area())
+  show(isImage && fitted.scale > 1 ? centered(size, area(), 1) : fitted)
 
   zoomIn.addEventListener('click', () => show(zoomAt(view, STEP, center())))
   zoomOut.addEventListener('click', () => show(zoomAt(view, 1 / STEP, center())))
