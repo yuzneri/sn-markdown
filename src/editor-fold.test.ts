@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 // エディタ（createEditor）で、見出しを次の同じか上の階層の見出しまで畳めることと、印の列が出ることを確かめる
 import { afterEach, describe, expect, it } from 'vitest'
-import { foldCode, foldedRanges, forceParsing, unfoldAll } from '@codemirror/language'
+import { foldCode, foldedRanges, unfoldAll } from '@codemirror/language'
 import { EditorView } from '@codemirror/view'
 import { createEditor } from './editor'
 import './jsdom-range'
+import { parseAll } from './parse-all'
 
 const parents: HTMLElement[] = []
 afterEach(() => parents.splice(0).forEach((parent) => parent.remove()))
@@ -16,12 +17,6 @@ function create(doc: string, onFoldsChange = () => {}) {
   const view = EditorView.findFromDOM(parent)!
   parseAll(view)
   return { editor, view, parent }
-}
-
-// 作った直後の構文木は、解析の時間の上限（20ms）で途中までのことがある（テストを並べて動かして重いときなど）。
-// 画面では残りを後から解析するが、テストはすぐに畳むので、最後まで解析しておく
-function parseAll(view: EditorView): void {
-  expect(forceParsing(view, view.state.doc.length, 5000)).toBe(true)
 }
 
 function folded(view: EditorView): string[] {

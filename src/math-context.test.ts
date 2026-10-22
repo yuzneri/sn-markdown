@@ -4,10 +4,11 @@ import { EditorState } from '@codemirror/state'
 import { tex } from '@mdit/plugin-tex'
 import MarkdownIt from 'markdown-it'
 import { inInlineMath, inMath, mathBlockLines } from './math-context'
+import { parsed } from './parse-all'
 
 /** `‸` の位置が数式の中か */
 function at(doc: string): boolean {
-  const state = EditorState.create({ doc: doc.replace('‸', ''), extensions: markdown({ base: markdownLanguage }) })
+  const state = parsed(EditorState.create({ doc: doc.replace('‸', ''), extensions: markdown({ base: markdownLanguage }) }))
   return inMath(state, doc.indexOf('‸'))
 }
 
@@ -77,7 +78,7 @@ describe('mathBlockLines', () => {
     ['コードブロックの中の $$', '```\n$$\n```\n\n$$\ny\n$$'],
     ['```math', 'a\n\n```math\nx = 1\n```\n\nb'],
   ])('%s', (_, doc) => {
-    const state = EditorState.create({ doc, extensions: markdown({ base: markdownLanguage }) })
+    const state = parsed(EditorState.create({ doc, extensions: markdown({ base: markdownLanguage }) }))
     expect(mathBlockLines(state)).toEqual(expected(doc))
   })
 })

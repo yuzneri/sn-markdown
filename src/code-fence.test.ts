@@ -6,6 +6,7 @@ import { markdown } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { closeCodeFence } from './code-fence'
+import { parsed } from './parse-all'
 
 const views: EditorView[] = []
 afterEach(() => views.splice(0).forEach((view) => view.destroy()))
@@ -14,7 +15,7 @@ function create(doc: string): EditorView {
   const pos = doc.indexOf('|')
   const view = new EditorView({
     parent: document.body,
-    state: EditorState.create({ doc: doc.replace('|', ''), selection: { anchor: pos }, extensions: [markdown(), history(), closeCodeFence] }),
+    state: parsed(EditorState.create({ doc: doc.replace('|', ''), selection: { anchor: pos }, extensions: [markdown(), history(), closeCodeFence] })),
   })
   views.push(view)
   return view

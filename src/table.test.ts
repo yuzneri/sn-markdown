@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
 import { dataUrlLabel } from './data-url'
+import { parsed } from './parse-all'
 import { alignOf, displayWidth, formatTable, locate, splitRow, tableAt, type TableLine } from './table'
 
-const state = (doc: string) => EditorState.create({ doc, extensions: markdown({ base: markdownLanguage }) })
+const state = (doc: string) => parsed(EditorState.create({ doc, extensions: markdown({ base: markdownLanguage }) }))
 const line = (prefix: string, ...cells: string[]): TableLine => ({ prefix, cells })
 
 describe('splitRow', () => {

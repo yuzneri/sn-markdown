@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState, type StateCommand } from '@codemirror/state'
+import { parsed } from './parse-all'
 import {
   addColumnRight,
   addRowBelow,
@@ -18,11 +19,13 @@ import {
 /** `‸` をカーソルとして書いた文書にコマンドを実行し、同じ書き方で結果を返す（表の | と区別するため、| は使わない） */
 function run(command: StateCommand, doc: string, options: { readOnly?: boolean } = {}): string | false {
   const cursor = doc.indexOf('‸')
-  let state = EditorState.create({
-    doc: doc.replace('‸', ''),
-    selection: { anchor: cursor },
-    extensions: [markdown({ base: markdownLanguage }), EditorState.readOnly.of(options.readOnly ?? false)],
-  })
+  let state = parsed(
+    EditorState.create({
+      doc: doc.replace('‸', ''),
+      selection: { anchor: cursor },
+      extensions: [markdown({ base: markdownLanguage }), EditorState.readOnly.of(options.readOnly ?? false)],
+    }),
+  )
   if (!command({ state, dispatch: (tr) => (state = tr.state) })) return false
   const head = state.selection.main.head
   const text = state.doc.toString()

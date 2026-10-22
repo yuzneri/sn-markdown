@@ -1,17 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
+import { parsed } from './parse-all'
 import { linkPaste } from './paste-link'
 
 /** `«` `»` を選択範囲として書いた文書に url を貼り、`‸` をカーソルとして結果を返す。リンクにしないときは null */
 function paste(doc: string, url: string): string | null {
   const from = doc.indexOf('«')
   const to = doc.indexOf('»') - 1
-  let state = EditorState.create({
-    doc: doc.replace('«', '').replace('»', ''),
-    selection: { anchor: from, head: to },
-    extensions: markdown({ base: markdownLanguage }),
-  })
+  let state = parsed(
+    EditorState.create({
+      doc: doc.replace('«', '').replace('»', ''),
+      selection: { anchor: from, head: to },
+      extensions: markdown({ base: markdownLanguage }),
+    }),
+  )
   const spec = linkPaste(state, url)
   if (!spec) return null
   state = state.update(spec).state

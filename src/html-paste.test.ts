@@ -6,6 +6,7 @@ import { EditorView } from '@codemirror/view'
 import { createEditor } from './editor'
 import { htmlToMarkdown } from './html-paste'
 import './jsdom-range'
+import { parseAll } from './parse-all'
 
 describe('htmlToMarkdown', () => {
   it('見出し、強調、リンク、リスト、引用、取り消し線を、書式のボタンと同じ記法にする', () => {
@@ -62,6 +63,7 @@ function paste(doc: string, clipboard: Record<string, string>, files: File[] = [
   const text = doc.replace(/[‸«»]/g, '')
   const editor = createEditor(parent, { text, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange: () => {} })
   const view = EditorView.findFromDOM(parent)!
+  parseAll(view)
   view.dispatch({ selection: { anchor, head } })
   const event = new Event('paste', { bubbles: true, cancelable: true })
   Object.defineProperty(event, 'clipboardData', { value: { getData: (type: string) => clipboard[type] ?? '', files, types: Object.keys(clipboard) } })

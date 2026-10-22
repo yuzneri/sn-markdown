@@ -3,11 +3,12 @@
 import { describe, expect, it } from 'vitest'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorState } from '@codemirror/state'
+import { parsed } from './parse-all'
 import { renderHtml } from './render'
 import { enableTaskToggle, toggleTask } from './task'
 
 function toggle(doc: string, line: number, readOnly = false): string | null {
-  const state = EditorState.create({ doc, extensions: [markdown({ base: markdownLanguage }), EditorState.readOnly.of(readOnly)] })
+  const state = parsed(EditorState.create({ doc, extensions: [markdown({ base: markdownLanguage }), EditorState.readOnly.of(readOnly)] }))
   const spec = toggleTask(state, line)
   return spec ? state.update(spec).state.doc.toString() : null
 }

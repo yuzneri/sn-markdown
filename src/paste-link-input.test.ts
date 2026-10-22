@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { EditorView } from '@codemirror/view'
 import { createEditor } from './editor'
 import './jsdom-range'
+import { parseAll } from './parse-all'
 
 const parents: HTMLElement[] = []
 afterEach(() => parents.splice(0).forEach((parent) => parent.remove()))
@@ -15,6 +16,7 @@ function input(doc: string, selected: string, text: string): string {
   parents.push(parent)
   const editor = createEditor(parent, { text: doc, locked: false }, { onChange: () => {}, onError: () => {}, onContextChange: () => {}, onFoldsChange: () => {} })
   const view = EditorView.findFromDOM(parent)!
+  parseAll(view)
   const from = doc.indexOf(selected)
   const to = from + selected.length
   view.dispatch({ selection: { anchor: from, head: to } })
