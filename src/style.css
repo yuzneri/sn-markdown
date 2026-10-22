@@ -51,7 +51,7 @@ body {
   border-bottom: 1px solid var(--sn-stylekit-border-color);
 }
 
-/* 書式のボタン（format-bar.ts）。モードの切り替えと同じ行に置き、幅が足りなければこの部分だけを横にスクロールする */
+/* 書式のボタン（format-bar.ts）。モードの切り替えと同じ行に置き（横幅が狭いときは 1 行を占める）、幅が足りなければこの部分だけを横にスクロールする */
 .format-bar {
   display: flex;
   flex: 1;
@@ -283,8 +283,19 @@ body {
   border-left: none;
 }
 
-/* 横幅が狭いときは、分割を上下に並べる */
+/* 横幅が狭いときは、分割を上下に並べる。ツールバーは 2 行にして、書式のボタンを 1 行目の幅いっぱいに並べ、
+   検索などのボタンとモードの切り替えを 2 行目の右に置く（1 行のままでは、書式のボタンが数個しか見えない） */
 @media (max-width: 640px) {
+  .toolbar {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    row-gap: 0.25rem;
+  }
+
+  .format-bar {
+    flex-basis: 100%;
+  }
+
   .panes {
     flex-direction: column;
   }

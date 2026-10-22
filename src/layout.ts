@@ -49,7 +49,7 @@ export interface LayoutHandlers {
 }
 
 export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutHandlers): Layout {
-  // 書式のボタンとモードの切り替えを 1 行に並べる。幅が足りなければ、書式のボタンの部分だけを横にスクロールする
+  // 書式のボタンとモードの切り替えを 1 行に並べる（横幅が狭いときは 2 行に分ける。style.css）。幅が足りなければ、書式のボタンの部分だけを横にスクロールする
   const toolbar = element('div', 'toolbar')
   const formatBar = createFormatBar(handlers)
 
