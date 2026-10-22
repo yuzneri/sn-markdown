@@ -11,6 +11,7 @@ import { renderMath } from './math'
 import { savedMode, withMode } from './preferences'
 import { headings, previewText, renderHtml } from './render'
 import { applyPreviewFolds, enablePreviewFold } from './preview-fold'
+import { enablePreviewJump } from './preview-jump'
 import { enableScrollSync, type ScrollSync } from './scroll-sync'
 import { enableTaskToggle } from './task'
 import { closeDiagramViewer, enableDiagramViewer } from './viewer'
@@ -92,6 +93,15 @@ const bridge = connectNote((update) => {
   enableDiagramViewer(layout.preview)
   enableTaskToggle(layout.preview, (line) => editor?.toggleTask(line) ?? false)
   enablePreviewFold(layout.preview, (line) => editor?.toggleFold(line))
+  enablePreviewJump(
+    layout.preview,
+    () => editor?.text.split('\n') ?? [],
+    ({ line, column }) => {
+      // Preview のモードではエディタが見えないので、Edit のモードにする（Split ではそのまま）
+      if (layout?.mode === 'preview') layout.selectMode('edit')
+      editor?.select(line, column)
+    },
+  )
   onLanguageLoaded(renderPreview)
   editor = createEditor(layout.editorPane, update, {
     onChange(text) {

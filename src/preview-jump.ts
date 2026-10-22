@@ -1,12 +1,68 @@
 // 押した文字の前後から元の行の中の位置を探すときの、探す文字の最大の数と、短くしていくときの下限（短すぎると、行の中の別の場所に当たる）
 const SNIPPET = 12
 const MIN_SNIPPET = 3
+// ダブルタップとみなす、2 回のタップの間の時間（ms）と距離（px）
+const DOUBLE_TAP_TIME = 350
+const DOUBLE_TAP_DISTANCE = 24
+// これらの上では移らない。ダブルクリックの 1 回目のクリックで、もう動いている（リンクを開く、チェックを切り替える、拡大表示を開く、畳むなど）
+const INTERACTIVE = 'a, button, input, summary, img, .mermaid-block'
 
 export interface SourcePosition {
   /** 0 始まり */
   line: number
   /** 行の中の位置（行頭からの文字数） */
   column: number
+}
+
+/**
+ * プレビューの文字をダブルクリック（タッチの端末ではダブルタップ）したら、その文字の元の Markdown での位置で onJump を呼ぶ。
+ * lines は、そのときの本文の行
+ */
+export function enablePreviewJump(preview: HTMLElement, lines: () => string[], onJump: (position: SourcePosition) => void): void {
+  const jump = (event: MouseEvent) => {
+    if (!(event.target instanceof Element) || event.target.closest(INTERACTIVE)) return
+    const caret = caretAt(event.clientX, event.clientY)
+    const position = caret && preview.contains(caret.node) ? sourcePosition(preview, caret.node, caret.offset, lines()) : null
+    if (!position) return
+    event.preventDefault()
+    onJump(position)
+  }
+
+  // タッチのダブルタップは、pointerup の間隔と距離で見分ける。タッチで dblclick が出るかは、ブラウザによって確かでない（iOS）。
+  // 出たときに 2 回動かないよう、タッチから来た dblclick は使わない
+  let pointerType = ''
+  let lastTap: { time: number; x: number; y: number } | undefined
+  // 移るのは、2 回目のタップの click が届いてから。タップの後には、ブラウザが mousedown・mouseup・click を送る。
+  // pointerup で移って Preview から Edit に切り替えると、それらが指の下に来たエディタに届き、そこの語を選んでしまう
+  let doubleTapped = false
+  preview.addEventListener('pointerdown', (event) => {
+    pointerType = event.pointerType
+    doubleTapped = false
+  })
+  preview.addEventListener('dblclick', (event) => {
+    if (pointerType !== 'touch') jump(event)
+  })
+  preview.addEventListener('pointerup', (event) => {
+    if (event.pointerType !== 'touch') return
+    const tap = { time: event.timeStamp, x: event.clientX, y: event.clientY }
+    doubleTapped = !!lastTap && tap.time - lastTap.time <= DOUBLE_TAP_TIME && Math.hypot(tap.x - lastTap.x, tap.y - lastTap.y) <= DOUBLE_TAP_DISTANCE
+    lastTap = doubleTapped ? undefined : tap
+  })
+  preview.addEventListener('click', (event) => {
+    if (!doubleTapped) return
+    doubleTapped = false
+    jump(event)
+  })
+}
+
+/** 画面の位置にある文字の位置。標準の caretPositionFromPoint は iOS では 26.2 からなので、なければ WebKit の caretRangeFromPoint を使う */
+function caretAt(x: number, y: number): { node: Node; offset: number } | null {
+  if (typeof document.caretPositionFromPoint === 'function') {
+    const caret = document.caretPositionFromPoint(x, y)
+    return caret && { node: caret.offsetNode, offset: caret.offset }
+  }
+  const range = document.caretRangeFromPoint(x, y)
+  return range && { node: range.startContainer, offset: range.startOffset }
 }
 
 /**

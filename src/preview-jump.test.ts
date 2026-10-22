@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 // プレビューの中の文字の位置から、元の Markdown の行と行の中の位置を求めることを確かめる
-import { describe, expect, it } from 'vitest'
-import { sourcePosition } from './preview-jump'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { enablePreviewJump, sourcePosition, type SourcePosition } from './preview-jump'
 import { renderHtml } from './render'
 
 /**
@@ -69,5 +69,87 @@ describe('sourcePosition', () => {
     const preview = document.createElement('div')
     preview.innerHTML = renderHtml('text')
     expect(sourcePosition(preview, preview, 0, ['text'])).toBeNull()
+  })
+})
+
+describe('enablePreviewJump', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+    document.body.replaceChildren()
+  })
+
+  /** プレビューを作り、押した位置の文字は、いつも段落の「two」の先頭にする（jsdom にはレイアウトがない） */
+  function setup(markdown = 'one\ntwo [link](https://example.com)') {
+    const preview = document.body.appendChild(document.createElement('div'))
+    preview.innerHTML = renderHtml(markdown)
+    const text = preview.querySelector('p')!.childNodes[2]
+    document.caretPositionFromPoint = () => ({ offsetNode: text, offset: 0, getClientRect: () => null })
+    const jumps: SourcePosition[] = []
+    enablePreviewJump(preview, () => markdown.split('\n'), (position) => jumps.push(position))
+    return { preview, jumps }
+  }
+
+  const pointer = (type: string, pointerType: string, target: Element, x = 10) =>
+    target.dispatchEvent(new PointerEvent(type, { pointerType, clientX: x, clientY: 10, bubbles: true }))
+
+  it('マウスのダブルクリックで、押した文字の位置を知らせる', () => {
+    const { preview, jumps } = setup()
+    const paragraph = preview.querySelector('p')!
+    pointer('pointerdown', 'mouse', paragraph)
+    paragraph.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    expect(jumps).toEqual([{ line: 1, column: 0 }])
+  })
+
+  it('caretPositionFromPoint のない環境（iOS 26.2 未満）では、caretRangeFromPoint を使う', () => {
+    const { preview, jumps } = setup()
+    const paragraph = preview.querySelector('p')!
+    const text = paragraph.childNodes[2]
+    Object.defineProperty(document, 'caretPositionFromPoint', { value: undefined, configurable: true })
+    document.caretRangeFromPoint = () => {
+      const range = document.createRange()
+      // 文字のノードは <br> の後ろの「\ntwo 」なので、2 文字目は two の w
+      range.setStart(text, 2)
+      return range
+    }
+    paragraph.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    expect(jumps).toEqual([{ line: 1, column: 1 }])
+  })
+
+  it('リンクなどの上のダブルクリックでは知らせない', () => {
+    const { preview, jumps } = setup()
+    preview.querySelector('a')!.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    expect(jumps).toEqual([])
+  })
+
+  /** タッチのタップ。ブラウザは pointerdown・pointerup の後に click を送る */
+  const tap = (target: Element, x = 10) => {
+    pointer('pointerdown', 'touch', target, x)
+    pointer('pointerup', 'touch', target, x)
+    target.dispatchEvent(new MouseEvent('click', { clientX: x, clientY: 10, bubbles: true }))
+  }
+
+  it('タッチでは、近い位置の 2 回のタップをダブルタップとし、2 回目の click で移る。タッチから来た dblclick は使わない', () => {
+    vi.useFakeTimers()
+    const { preview, jumps } = setup()
+    const paragraph = preview.querySelector('p')!
+    tap(paragraph)
+    pointer('pointerdown', 'touch', paragraph)
+    pointer('pointerup', 'touch', paragraph)
+    // click の前（pointerup の時点）では、まだ移らない
+    expect(jumps).toHaveLength(0)
+    paragraph.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+    paragraph.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))
+    expect(jumps).toHaveLength(1)
+  })
+
+  it('間が空いたタップや、離れた位置のタップはダブルタップにしない', () => {
+    vi.useFakeTimers()
+    const { preview, jumps } = setup()
+    const paragraph = preview.querySelector('p')!
+    tap(paragraph)
+    vi.advanceTimersByTime(500)
+    tap(paragraph)
+    tap(paragraph, 100)
+    expect(jumps).toEqual([])
   })
 })

@@ -255,6 +255,8 @@ body {
 .preview-pane {
   overflow: auto;
   border-left: 1px solid var(--sn-stylekit-border-color);
+  /* ダブルタップをエディタへの移動に使うので、画面の拡大に使わせない（ピンチでの拡大はできる） */
+  touch-action: manipulation;
 }
 
 .panes[data-mode='edit'] .preview-pane,

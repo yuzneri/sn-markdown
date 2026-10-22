@@ -20,6 +20,8 @@ export interface Layout {
   /** プレビューのスクロールする要素 */
   readonly previewScroller: HTMLElement
   setMode(mode: Mode): void
+  /** モードのボタンを押したのと同じく、モードを切り替えて onModeChange を呼ぶ（保存する） */
+  selectMode(mode: Mode): void
   /** ロック中は書式のボタンを無効にする */
   setLocked(locked: boolean): void
   /** カーソルが表の中なら表の行・列の操作に、数式の中なら数式の入力補助に、書式のボタンの右の組を替える */
@@ -70,11 +72,7 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
     const button = element('button', 'mode-button')
     button.type = 'button'
     button.textContent = LABELS[mode]
-    button.addEventListener('click', () => {
-      if (mode === current) return
-      layout.setMode(mode)
-      handlers.onModeChange(mode)
-    })
+    button.addEventListener('click', () => layout.selectMode(mode))
     return button
   })
   modes.append(...buttons)
@@ -114,6 +112,11 @@ export function createLayout(root: HTMLElement, initial: Mode, handlers: LayoutH
       panes.dataset.mode = mode
       buttons.forEach((button, i) => button.setAttribute('aria-pressed', String(MODES[i] === mode)))
       updateFormatBar()
+    },
+    selectMode(mode) {
+      if (mode === current) return
+      layout.setMode(mode)
+      handlers.onModeChange(mode)
     },
     setLocked(value) {
       locked = value

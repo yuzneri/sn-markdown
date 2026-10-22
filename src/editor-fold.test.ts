@@ -59,6 +59,19 @@ describe('折りたたみ', () => {
     expect(changes).toBe(2)
   })
 
+  it('select（プレビューのダブルクリック）でカーソルを置く。畳んだ範囲の中なら、その範囲を開く', () => {
+    let changes = 0
+    const { editor, view } = create(doc, () => changes++)
+    editor.toggleFold(0)
+    editor.select(2, 2)
+    expect(view.state.selection.main.head).toBe(view.state.doc.line(3).from + 2)
+    expect(folded(view)).toEqual([])
+    expect(changes).toBe(2)
+    // 範囲の外の行と位置は、文書と行の端にする
+    editor.select(99, 99)
+    expect(view.state.selection.main.head).toBe(view.state.doc.length)
+  })
+
   it('畳めない行や、範囲の外の行では何もしない', () => {
     const { editor } = create(doc)
     editor.toggleFold(2)

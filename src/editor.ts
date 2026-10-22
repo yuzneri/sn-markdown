@@ -35,6 +35,11 @@ export interface MarkdownEditor {
    * scrollToLine だと描いた後にずれる。CodeMirror に高さを測ってから動かさせる
    */
   revealLine(line: number): void
+  /**
+   * line 行目（0 始まり）の column 文字目にカーソルを置き、そこを中央にスクロールしてフォーカスする（プレビューのダブルクリック）。
+   * カーソルが畳んだ範囲に入ると、CodeMirror がその範囲を開く
+   */
+  select(line: number, column: number): void
   /** 外部（他端末など）からの本文の変更とロックの状態を反映する。本文の変更は保存も履歴への追加もしない */
   update(update: NoteUpdate): void
   /** 画像をカーソルの位置に埋め込む */
@@ -143,6 +148,13 @@ export function createEditor(parent: HTMLElement, initial: NoteUpdate, handlers:
       const { doc } = view.state
       const pos = doc.line(Math.min(doc.lines, Math.max(1, line + 1))).from
       view.dispatch({ effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: 0 }) })
+    },
+    select(line, column) {
+      const { doc } = view.state
+      const target = doc.line(Math.min(doc.lines, Math.max(1, line + 1)))
+      const pos = target.from + Math.min(Math.max(0, column), target.length)
+      view.dispatch({ selection: { anchor: pos }, effects: EditorView.scrollIntoView(pos, { y: 'center' }), userEvent: 'select' })
+      view.focus()
     },
     update({ text, locked }) {
       view.dispatch({
