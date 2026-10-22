@@ -3,6 +3,7 @@ import './style.css'
 import './preview.css'
 import { watchAppearance } from './appearance'
 import { connectNote } from './bridge'
+import { addCopyButtons, enableCodeCopy } from './code-copy'
 import { renderDiagrams } from './diagram'
 import { createEditor, type MarkdownEditor } from './editor'
 import { onLanguageLoaded } from './highlight'
@@ -41,6 +42,7 @@ function renderPreview(): void {
   // 編集モードではプレビューが見えないので描画しない。モードを切り替えたときに描画する
   if (!editor || !layout || layout.mode === 'edit') return
   layout.showPreview(renderHtml(editor.text))
+  addCopyButtons(layout.preview)
   applyPreviewFolds(layout.preview, editor.foldedLines())
   renderDiagrams(layout.preview, appearance, renderPreview)
   renderMath(layout.preview, renderPreview)
@@ -93,6 +95,7 @@ const bridge = connectNote((update) => {
   enableViewer(layout.preview)
   enableTaskToggle(layout.preview, (line) => editor?.toggleTask(line) ?? false)
   enablePreviewFold(layout.preview, (line) => editor?.toggleFold(line))
+  enableCodeCopy(layout.preview, (message) => layout?.showMessage(message))
   enablePreviewJump(
     layout.preview,
     () => editor?.text.split('\n') ?? [],

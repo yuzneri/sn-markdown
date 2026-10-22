@@ -27,6 +27,21 @@ body {
   height: 100%;
 }
 
+/* コードのコピーで、文字を選んで写すための一時的な欄（code-copy.ts）。見えない位置に置き、スクロールさせない。
+   iOS は 16px 未満の欄にフォーカスすると画面を拡大するので、16px にする */
+.copy-buffer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  border: none;
+  font-size: 16px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .toolbar {
   position: relative;
   display: flex;
